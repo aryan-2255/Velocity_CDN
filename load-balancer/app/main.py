@@ -39,7 +39,8 @@ app.add_middleware(
     # Browsers hide non-safelisted response headers from JS unless they're named
     # here, so without this the dashboard reads null for the cache result even
     # though the headers are on the wire (curl sees them fine).
-    expose_headers=["X-Cache-Result", "X-Served-By", "X-Request-ID", "X-Failover", "Warning"],
+    expose_headers=["X-Cache-Result", "X-Served-By", "X-Request-ID", "X-Failover",
+                    "Warning", "Accept-Ranges", "Content-Range"],
 )
 
 app.include_router(fetch.router)

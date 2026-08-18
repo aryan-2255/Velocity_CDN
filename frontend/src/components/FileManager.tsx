@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from "react";
 import { api } from "../api";
+import { MediaPreview } from "./MediaPreview";
 import type { OriginFile } from "../types";
 
 function formatBytes(n: number): string {
@@ -13,6 +14,7 @@ export function FileManager({ onChange }: { onChange?: () => void }) {
   const [busy, setBusy] = useState(false);
   const [note, setNote] = useState<{ ok: boolean; text: string } | null>(null);
   const [customKey, setCustomKey] = useState("");
+  const [preview, setPreview] = useState<OriginFile | null>(null);
   const inputRef = useRef<HTMLInputElement>(null);
 
   const refresh = async () => {
@@ -51,6 +53,7 @@ export function FileManager({ onChange }: { onChange?: () => void }) {
     setNote(null);
     try {
       await api.deleteFile(key);
+      setPreview((cur) => (cur?.key === key ? null : cur));
       setNote({ ok: true, text: `Deleted ${key}, purge pushed to all edges` });
       await refresh();
       onChange?.();
@@ -127,7 +130,14 @@ export function FileManager({ onChange }: { onChange?: () => void }) {
                 <td className="py-1 tabular-nums" style={{ color: "var(--text-secondary)" }}>
                   {f.version}
                 </td>
-                <td className="py-1 text-right">
+                <td className="py-1 text-right whitespace-nowrap">
+                  <button
+                    onClick={() => setPreview(f)}
+                    className="rounded px-1.5 py-0.5 text-[11px]"
+                    style={{ color: "var(--series-1)" }}
+                  >
+                    open
+                  </button>
                   <button
                     onClick={() => void remove(f.key)}
                     disabled={busy}
@@ -149,6 +159,14 @@ export function FileManager({ onChange }: { onChange?: () => void }) {
           </tbody>
         </table>
       </div>
+
+      {preview && (
+        <MediaPreview
+          fileKey={preview.key}
+          contentType={preview.content_type}
+          onClose={() => setPreview(null)}
+        />
+      )}
     </div>
   );
 }

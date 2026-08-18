@@ -43,6 +43,10 @@ export const api = {
   topFiles: (limit = 10) => getJSON<TopFile[]>(`/dashboard/stats/top-files?limit=${limit}`),
   edgeRequests: () => getJSON<{ edge: string; region: string; requests: number }[]>("/dashboard/stats/edge-requests"),
   streamUrl: () => `${LB_URL}/dashboard/stream`,
+  // Direct URL for <video>/<img>/download. The browser fetches it itself, which
+  // is what makes range requests (and therefore seeking) work.
+  contentUrl: (key: string, region?: string) =>
+    `${LB_URL}/fetch/${encodeURIComponent(key)}${region ? `?region=${encodeURIComponent(region)}` : ""}`,
   fetchFile: (key: string, region?: string) => {
     const q = region ? `?region=${encodeURIComponent(region)}` : "";
     return fetch(`${LB_URL}/fetch/${encodeURIComponent(key)}${q}`);

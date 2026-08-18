@@ -22,35 +22,40 @@ async def hit_ratio(db: AsyncSession = Depends(get_db)) -> dict:
 
 
 @router.get("/hit-ratio-timeseries")
-async def hit_ratio_timeseries(
-    bucket_minutes: int = 1, min_samples: int = 5, db: AsyncSession = Depends(get_db)
-) -> list[dict]:
-    """Hit ratio over time, in time buckets.
+async def hit_ratio_timeseries(limit: int = 300, db: AsyncSession = Depends(get_db)) -> list[dict]:
+    """Cumulative hit ratio, one point per request.
 
-    Buckets with fewer than `min_samples` requests are dropped: a minute holding
-    one request plots as a hard 0% or 100% and reads as a dramatic swing, when
-    it's a sample size of one. Without this the chart sawtooths on idle periods
-    and buries the real trend.
+    Deliberately not per-minute buckets. Bucketing breaks at both ends: a minute
+    holding a single request plots as a hard 0% or 100%, so light traffic
+    sawtooths, and filtering those out leaves an empty chart. A running total is
+    defined from the very first request and smooths itself as the sample grows,
+    which is also what "climbs from a cold start" actually describes.
+
+    Returns at most `limit` points, sampled evenly, so a long run stays readable.
     """
-    bucket = func.date_trunc("minute", RequestLog.ts)
     q = (
-        select(bucket.label("bucket"), RequestLog.cache_result, func.count())
-        .group_by("bucket", RequestLog.cache_result)
-        .order_by("bucket")
+        select(RequestLog.ts, RequestLog.cache_result)
+        .where(RequestLog.cache_result.in_(("hit", "miss", "stale")))
+        .order_by(RequestLog.ts)
     )
     rows = (await db.execute(q)).all()
-    buckets: dict[str, dict[str, int]] = {}
-    for ts, result, count in rows:
-        key = ts.isoformat()
-        buckets.setdefault(key, {})[result or "unknown"] = count
-    out = []
-    for ts, counts in sorted(buckets.items()):
-        total = sum(counts.values())
-        if total < min_samples:
-            continue
-        hits = counts.get("hit", 0)
-        out.append({"ts": ts, "hit_ratio": hits / total, "total": total})
-    return out
+    if not rows:
+        return []
+
+    points = []
+    hits = 0
+    for i, (ts, result) in enumerate(rows, start=1):
+        if result == "hit":
+            hits += 1
+        points.append({"ts": ts.isoformat(), "hit_ratio": hits / i, "total": i})
+
+    # Even sampling keeps the shape while capping payload size.
+    if len(points) > limit:
+        step = len(points) / limit
+        sampled = [points[int(i * step)] for i in range(limit)]
+        sampled[-1] = points[-1]  # always keep the current value
+        points = sampled
+    return points
 
 
 @router.get("/latency")

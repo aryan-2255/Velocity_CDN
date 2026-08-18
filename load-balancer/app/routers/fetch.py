@@ -58,9 +58,14 @@ async def fetch(key: str, request: Request, background_tasks: BackgroundTasks, r
 
     for attempt, edge in enumerate(candidates):
         try:
+            # Forward Range through so media players can seek; the edge answers
+            # 206 from its cached copy and the LB proxies that back verbatim.
+            downstream = {"X-Request-ID": str(request_id)}
+            if request.headers.get("range"):
+                downstream["Range"] = request.headers["range"]
             resp = await http_client.get(
                 f"{edge.base_url}/content/{key}",
-                headers={"X-Request-ID": str(request_id)},
+                headers=downstream,
                 timeout=settings.edge_request_timeout_seconds,
             )
         except httpx.HTTPError:
@@ -97,9 +102,15 @@ async def fetch(key: str, request: Request, background_tasks: BackgroundTasks, r
         }
         if resp.headers.get("warning"):
             headers["Warning"] = resp.headers["warning"]
+        # Range plumbing: without Content-Range and Accept-Ranges reaching the
+        # client, a browser treats the response as a plain body and won't seek.
+        for h in ("accept-ranges", "content-range"):
+            if resp.headers.get(h):
+                headers[h.title()] = resp.headers[h]
 
         return Response(
             content=resp.content,
+            status_code=resp.status_code,
             media_type=resp.headers.get("content-type", "application/octet-stream"),
             headers=headers,
         )

@@ -30,8 +30,7 @@ export function HitRatioChart() {
         Hit ratio over time
       </h2>
       <p className="mb-3 text-xs" style={{ color: "var(--text-muted)" }}>
-        Per-minute buckets, quiet minutes omitted. Dips are cold keys arriving; the climb after is
-        the cache warming.
+        Running total across every request. Starts low while edges are cold, climbs as they fill.
       </p>
       {data.length === 0 ? (
         <EmptyState />
@@ -40,10 +39,12 @@ export function HitRatioChart() {
           <LineChart data={data} margin={{ top: 4, right: 12, left: 0, bottom: 0 }}>
             <CartesianGrid stroke="var(--gridline)" vertical={false} />
             <XAxis
-              dataKey="ts"
-              tickFormatter={(v) => new Date(v).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}
+              dataKey="total"
+              tickFormatter={(v) => `${v}`}
               tick={{ fill: "var(--text-muted)", fontSize: 11 }}
               stroke="var(--baseline)"
+              label={{ value: "requests", position: "insideBottom", offset: -2,
+                       fill: "var(--text-muted)", fontSize: 11 }}
             />
             <YAxis
               domain={[0, 1]}
@@ -54,7 +55,7 @@ export function HitRatioChart() {
             />
             <Tooltip
               formatter={(value: number) => [`${(value * 100).toFixed(1)}%`, "Hit ratio"]}
-              labelFormatter={(v) => new Date(v).toLocaleTimeString()}
+              labelFormatter={(v) => `after ${v} requests`}
               contentStyle={{
                 background: "var(--surface-1)",
                 border: "1px solid var(--border)",
