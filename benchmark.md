@@ -111,6 +111,66 @@ need roughly 2,100 of these boxes to reach it, ignoring coordination overhead
 entirely. This project is a correct, measured CDN at small scale, and that's the
 honest claim to make about it.
 
+## Single-flight, verified
+
+Spec section 6 promises that N concurrent requests for the same uncached key
+produce one Origin fetch, not N. Tested against the live deployment with a
+freshly uploaded 400KB file that no edge had seen:
+
+| Concurrent requests to edge-mumbai | Origin fetches |
+|---|---|
+| 25 | **1** |
+
+Counted from Origin's own access log. Without the per-key `asyncio.Lock` in
+`edge/app/cache_manager.py`, a cold-cache traffic spike becomes a thundering
+herd against Origin — 25 duplicate S3 reads for one file.
+
+All 25 are still logged as `miss`, which is correct: none were served from
+cache. The saving is in Origin load, not in the labelling.
+
+## Cache eviction, verified
+
+Tested with a throwaway edge at `CACHE_MAX_BYTES=1000000` (1MB) and LRU, fed
+five ~293KB files so the working set (1.47MB) exceeds the cap:
+
+| Step | Entries | Occupancy | What happened |
+|---|---|---|---|
+| fetch ev/1 | 1 | 293 KB (29%) | stored |
+| fetch ev/2 | 2 | 587 KB (59%) | stored |
+| fetch ev/3 | 3 | 880 KB (88%) | stored |
+| fetch ev/4 | 3 | 880 KB (88%) | **evicted ev/1**, stored ev/4 |
+| fetch ev/5 | 3 | 880 KB (88%) | **evicted ev/2**, stored ev/5 |
+
+Then re-requesting the two ends:
+
+- `ev/1.txt` → **miss** (evicted, as LRU should)
+- `ev/5.txt` → **hit** (most recent, survived)
+
+**The cap was never exceeded** — occupancy held at 880KB because a fourth
+293KB entry would have crossed 1MB. `cache_events` recorded each eviction with
+`reason=lru_evict`, so the policy that fired is attributable after the fact.
+
+This is the test that makes the eviction-policy work real rather than
+theoretical. Note the production edges run a 200MB cap against a ~15MB working
+set, so **eviction never fires there** — which is exactly why the LRU/LFU/FIFO
+hit-ratio comparison below is still not a meaningful experiment.
+
+## Invalidation on update, verified
+
+| Step | Result |
+|---|---|
+| Upload `inv-test.txt` as "VERSION ONE" | v1 |
+| Fetch via mumbai and frankfurt | both serve "VERSION ONE", now cached |
+| Re-upload same key as "VERSION TWO" | v2, new checksum |
+| Fetch via mumbai, frankfurt, singapore | **all three serve "VERSION TWO"** |
+
+`invalidations.propagated_to` recorded
+`{"edge-mumbai": "ok", "edge-frankfurt": "ok", "edge-singapore": "ok"}`.
+
+No edge served the stale copy after the update — the push purge beat the next
+read, which is the property that matters. Per-edge success is tracked so a
+partial propagation failure is visible rather than silent.
+
 ## Stale-while-revalidate, verified
 
 Spec section 6 promises that an edge with an expired copy keeps serving when
