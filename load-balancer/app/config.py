@@ -7,11 +7,11 @@ class Settings(BaseSettings):
     origin_base_url: str = "http://origin:8000"
 
     # Only trust X-Forwarded-For from these hop IPs (e.g. the Nginx box in front of this
-    # service in Phase 3). Never trust it blindly — that's a client-spoofable geo bypass.
+    # service in Phase 3). Never trust it blindly, that's a client-spoofable geo bypass.
     trusted_proxies: str = ""  # comma-separated
 
     # Optional: absent in local dev unless MaxMind license key is provisioned (spec section 16).
-    # geoip.py degrades gracefully — falls through to "unresolved" rather than crashing.
+    # geoip.py degrades gracefully, falls through to "unresolved" rather than crashing.
     geoip_db_path: str = "/geoip/GeoLite2-City.mmdb"
 
     health_check_interval_seconds: float = 10.0
@@ -40,7 +40,7 @@ def cors_origin_list() -> list[str]:
 
 
 # Demo client locations for the manual override (spec section 5.4). These are
-# *client* positions to simulate — "pretend the user is here" — not server
+# *client* positions to simulate, "pretend the user is here", not server
 # locations. Cities with no nearby edge are the interesting ones: they're what
 # actually exercises nearest-edge selection. The dashboard reads this list from
 # GET /regions rather than keeping its own copy, so the two can't drift.
@@ -127,6 +127,6 @@ REGION_LABELS: dict[str, str] = {
 LOCAL_EDGE_RADIUS_KM = 500.0
 
 # Where an unresolvable client IP falls back to (no GeoLite2 DB provisioned yet, or a
-# private/reserved address like localhost during local dev) — Origin's own region,
+# private/reserved address like localhost during local dev). Origin's own region,
 # since that's the CDN's "home" and a defensible default.
 DEFAULT_COORDS: tuple[float, float] = (39.0438, -77.4874)  # us-east-1 (N. Virginia)

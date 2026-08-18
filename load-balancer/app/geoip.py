@@ -20,20 +20,20 @@ def _get_reader() -> geoip2.database.Reader | None:
     _load_attempted = True
     path = Path(settings.geoip_db_path)
     if not path.exists():
-        logger.warning("GeoLite2 DB not found at %s — geo resolution disabled, use ?region= override", path)
+        logger.warning("GeoLite2 DB not found at %s, geo resolution disabled, use ?region= override", path)
         return None
     _reader = geoip2.database.Reader(str(path))
     return _reader
 
 
 def geoip_available() -> bool:
-    """Whether real geo resolution can happen at all — false when no GeoLite2 DB
+    """Whether real geo resolution can happen at all, false when no GeoLite2 DB
     is provisioned, in which case every 'auto' request falls back to DEFAULT_COORDS."""
     return _get_reader() is not None
 
 
 def resolve_ip(ip: str) -> tuple[float, float, str] | None:
-    """Returns (lat, lon, human-readable label) or None if unresolvable —
+    """Returns (lat, lon, human-readable label) or None if unresolvable,
     missing DB, private/reserved IP (common in local dev), or a lookup miss."""
     reader = _get_reader()
     if reader is None:
@@ -52,7 +52,7 @@ def resolve_ip(ip: str) -> tuple[float, float, str] | None:
 
 def get_client_ip(request: Request) -> str:
     """Real client IP. X-Forwarded-For is only trusted when the immediate peer
-    is a known proxy (TRUSTED_PROXIES) — otherwise it's client-spoofable and
+    is a known proxy (TRUSTED_PROXIES), otherwise it's client-spoofable and
     would let anyone fake their geo-routing."""
     peer_ip = request.client.host if request.client else ""
     trusted = trusted_proxy_list()

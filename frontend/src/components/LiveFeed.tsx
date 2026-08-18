@@ -54,17 +54,17 @@ export function LiveFeed() {
                   {new Date(row.ts).toLocaleTimeString()}
                 </td>
                 <td className="py-1 pr-3" style={{ color: "var(--text-secondary)" }}>
-                  {row.resolved_region ?? "—"}
+                  {row.resolved_region ?? "-"}
                 </td>
                 <td className="py-1 pr-3" style={{ color: "var(--text-secondary)" }}>
-                  {row.edge_id ? row.edge_id.slice(0, 8) : "—"}
+                  {row.edge_id ? row.edge_id.slice(0, 8) : "-"}
                 </td>
                 <td
                   className="max-w-[16rem] truncate py-1 pr-3"
                   style={{ color: "var(--text-primary)" }}
                   title={row.file_key ?? undefined}
                 >
-                  {row.file_key ?? "—"}
+                  {row.file_key ?? "-"}
                 </td>
                 <td className="py-1 pr-3">
                   <span
@@ -75,14 +75,14 @@ export function LiveFeed() {
                   </span>
                 </td>
                 <td className="py-1 pr-3 tabular-nums" style={{ color: "var(--text-secondary)" }}>
-                  {row.latency_ms != null ? `${row.latency_ms}ms` : "—"}
+                  {row.latency_ms != null ? `${row.latency_ms}ms` : "-"}
                 </td>
               </tr>
             ))}
             {rows.length === 0 && (
               <tr>
                 <td colSpan={6} className="py-4 text-center" style={{ color: "var(--text-muted)" }}>
-                  Waiting for requests — try the fetch tester above.
+                  Waiting for requests, try the fetch tester above.
                 </td>
               </tr>
             )}

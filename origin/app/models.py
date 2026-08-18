@@ -1,7 +1,7 @@
 """SQLAlchemy models mapped onto the schema owned by db/init.sql.
 
 Tables are created by init.sql (run via psql in prod, auto-run by the Postgres
-container locally) — this file does not call `Base.metadata.create_all`.
+container locally), this file does not call `Base.metadata.create_all`.
 Keep it in sync with db/init.sql by hand; that file is the source of truth.
 """
 

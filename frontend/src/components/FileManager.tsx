@@ -19,7 +19,7 @@ export function FileManager({ onChange }: { onChange?: () => void }) {
     try {
       setFiles(await api.files());
     } catch {
-      // transient — the next poll or action will pick it up
+      // transient, the next poll or action will pick it up
     }
   };
 
@@ -51,7 +51,7 @@ export function FileManager({ onChange }: { onChange?: () => void }) {
     setNote(null);
     try {
       await api.deleteFile(key);
-      setNote({ ok: true, text: `Deleted ${key} — purge pushed to all edges` });
+      setNote({ ok: true, text: `Deleted ${key}, purge pushed to all edges` });
       await refresh();
       onChange?.();
     } catch (err) {
@@ -142,7 +142,7 @@ export function FileManager({ onChange }: { onChange?: () => void }) {
             {files.length === 0 && (
               <tr>
                 <td colSpan={5} className="py-4 text-center" style={{ color: "var(--text-muted)" }}>
-                  No files yet — upload one above.
+                  No files yet, upload one above.
                 </td>
               </tr>
             )}

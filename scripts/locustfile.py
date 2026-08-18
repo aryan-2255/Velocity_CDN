@@ -1,7 +1,7 @@
 """Load generator for the Load Balancer's /fetch endpoint (master spec section 7).
 
 Zipf-distributed key popularity is what makes eviction-policy differences show
-up — a handful of files take most of the traffic, so LRU/LFU/FIFO disagree
+up, a handful of files take most of the traffic, so LRU/LFU/FIFO disagree
 about what to keep. Run from a box that is NOT co-located with any edge, so
 you're measuring the system's latency, not your own loopback.
 
@@ -47,6 +47,6 @@ class CDNUser(HttpUser):
             if resp.status_code >= 500:
                 resp.failure(f"server error: {resp.status_code}")
             elif resp.status_code == 404:
-                resp.failure("file not found — did you run scripts/seed_demo.py?")
+                resp.failure("file not found, did you run scripts/seed_demo.py?")
             else:
                 resp.success()

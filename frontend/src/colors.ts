@@ -1,8 +1,8 @@
-// Fixed categorical assignment for cache_result — never cycled, reused everywhere
+// Fixed categorical assignment for cache_result, never cycled, reused everywhere
 // this dimension appears (live feed badges, latency chart) so identity stays
 // consistent across the dashboard. Slots pulled from the dataviz skill's
 // validated categorical order (references/palette.md): 1=blue, 2=orange,
-// 3=aqua, 8=red — non-contiguous by design, red reserved for the failure case.
+// 3=aqua, 8=red, non-contiguous by design, red reserved for the failure case.
 const CACHE_RESULT_COLORS: Record<string, string> = {
   hit: "var(--series-1)",
   miss: "var(--series-2)",

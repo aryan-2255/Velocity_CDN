@@ -2,7 +2,7 @@
 @tailwind components;
 @tailwind utilities;
 
-/* Palette tokens — see dataviz skill references/palette.md. Light values are
+/* Palette tokens. Light values are
    the default; dark values apply under the OS preference AND an explicit
    [data-theme="dark"] toggle. */
 :root {

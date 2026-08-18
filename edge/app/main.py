@@ -51,7 +51,7 @@ async def lifespan(app: FastAPI):
     await http_client.aclose()
 
 
-app = FastAPI(title="Velocity CDN — Edge", lifespan=lifespan)
+app = FastAPI(title="Velocity CDN. Edge", lifespan=lifespan)
 
 app.include_router(content.router)
 app.include_router(internal.router)

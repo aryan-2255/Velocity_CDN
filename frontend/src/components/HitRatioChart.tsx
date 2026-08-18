@@ -81,7 +81,7 @@ export function HitRatioChart() {
 function EmptyState() {
   return (
     <p className="py-8 text-center text-sm" style={{ color: "var(--text-muted)" }}>
-      No requests yet — traffic will populate this chart.
+      No requests yet, traffic will populate this chart.
     </p>
   );
 }

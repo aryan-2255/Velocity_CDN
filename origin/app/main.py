@@ -12,7 +12,7 @@ async def lifespan(app: FastAPI):
     yield
 
 
-app = FastAPI(title="Velocity CDN — Origin", lifespan=lifespan)
+app = FastAPI(title="Velocity CDN. Origin", lifespan=lifespan)
 
 app.include_router(files.router)
 app.include_router(internal.router)

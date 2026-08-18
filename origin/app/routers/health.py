@@ -13,7 +13,7 @@ router = APIRouter(tags=["health"])
 @router.get("/health")
 async def health(db: AsyncSession = Depends(get_db)) -> dict:
     """Origin's two hard dependencies are Postgres and S3, so both are probed
-    here — an Origin that can't reach S3 still answers requests, it just fails
+    here, an Origin that can't reach S3 still answers requests, it just fails
     every cache miss, which is worth seeing on the dashboard before users do."""
     try:
         await db.execute(text("select 1"))

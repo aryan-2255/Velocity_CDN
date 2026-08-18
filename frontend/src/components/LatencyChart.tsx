@@ -46,11 +46,11 @@ export function LatencyChart() {
         Avg latency by outcome, per region
       </h2>
       <p className="mb-3 text-xs" style={{ color: "var(--text-muted)" }}>
-        Origin-direct baseline needs the Locust benchmark (see benchmark.md) — not shown here.
+        Origin-direct baseline needs the Locust benchmark (see benchmark.md), not shown here.
       </p>
       {data.length === 0 ? (
         <p className="py-8 text-center text-sm" style={{ color: "var(--text-muted)" }}>
-          No requests yet — traffic will populate this chart.
+          No requests yet, traffic will populate this chart.
         </p>
       ) : (
         <ResponsiveContainer width="100%" height={240}>

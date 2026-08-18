@@ -50,5 +50,5 @@ export const api = {
 };
 
 // The region list is served by the load balancer (GET /regions), not duplicated
-// here — it resolves each choice through the same rank_edges() the real /fetch
+// here, it resolves each choice through the same rank_edges() the real /fetch
 // path uses, so the dropdown can't promise a route that routing wouldn't take.

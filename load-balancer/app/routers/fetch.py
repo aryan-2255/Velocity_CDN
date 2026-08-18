@@ -64,10 +64,10 @@ async def fetch(key: str, request: Request, background_tasks: BackgroundTasks, r
                 timeout=settings.edge_request_timeout_seconds,
             )
         except httpx.HTTPError:
-            continue  # this edge is unreachable right now — fail over to the next-nearest
+            continue  # this edge is unreachable right now, fail over to the next-nearest
 
         if resp.status_code >= 500:
-            continue  # edge is up but errored on this request — also fail over
+            continue  # edge is up but errored on this request, also fail over
 
         latency_ms = int((time.perf_counter() - start) * 1000)
 
@@ -104,7 +104,7 @@ async def fetch(key: str, request: Request, background_tasks: BackgroundTasks, r
             headers=headers,
         )
 
-    # Every candidate edge failed — origin-direct would be the next fallback
+    # Every candidate edge failed, origin-direct would be the next fallback
     # in a production CDN; out of scope for Phase 1 (edges are the only client-facing path).
     latency_ms = int((time.perf_counter() - start) * 1000)
     background_tasks.add_task(

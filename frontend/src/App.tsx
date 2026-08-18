@@ -28,7 +28,7 @@ export default function App() {
           setEdges(edgeList);
         }
       } catch {
-        // transient — next poll will recover
+        // transient, next poll will recover
       }
     };
     poll();
@@ -48,17 +48,17 @@ export default function App() {
           Velocity CDN
         </h1>
         <p className="text-sm" style={{ color: "var(--text-secondary)" }}>
-          Geo-distributed edge caching CDN simulator — live from the load balancer.
+          Geo-distributed edge caching CDN simulator, live from the load balancer.
         </p>
       </header>
 
       <div className="mb-6 grid grid-cols-2 gap-3 sm:grid-cols-4">
-        <StatTile label="Hit ratio" value={hitRatio ? `${(hitRatio.hit_ratio * 100).toFixed(0)}%` : "—"} />
-        <StatTile label="Total requests" value={hitRatio ? `${hitRatio.total}` : "—"} />
+        <StatTile label="Hit ratio" value={hitRatio ? `${(hitRatio.hit_ratio * 100).toFixed(0)}%` : "-"} />
+        <StatTile label="Total requests" value={hitRatio ? `${hitRatio.total}` : "-"} />
         <StatTile label="Edges healthy" value={`${healthyEdges} / ${edges.length}`} />
         <StatTile
           label="Origin offload"
-          value={hitRatio ? `${hitRatio.counts?.miss ?? 0}` : "—"}
+          value={hitRatio ? `${hitRatio.counts?.miss ?? 0}` : "-"}
           sublabel={
             hitRatio ? `of ${hitRatio.total} requests reached origin` : "requests that reached origin"
           }

@@ -1,7 +1,7 @@
 """Endpoints Origin exposes only to the Load Balancer and Edges.
 
 Edges and the Load Balancer never hold Postgres credentials directly (see
-master spec section 4) — they report request/cache events here, and the LB
+master spec section 4), they report request/cache events here, and the LB
 reads the edge registry + analytics through here too, since Origin is the
 only service with a DB connection.
 """

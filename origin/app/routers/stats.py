@@ -1,5 +1,5 @@
 """Aggregate analytics for the dashboard. Every graph here is a GROUP BY over
-request_logs / cache_events — no separate metrics store (see spec section 4)."""
+request_logs / cache_events, no separate metrics store (see spec section 4)."""
 
 from fastapi import APIRouter, Depends
 from sqlalchemy import func, select

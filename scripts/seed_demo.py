@@ -48,9 +48,9 @@ def main() -> int:
     print(f"Seeding {args.count} demo files into {args.origin} ...")
     for i in range(args.count):
         key = f"demo/file-{i:02d}.txt"
-        # Small, distinct payloads (10KB-ish) — big enough to see eviction with a low
+        # Small, distinct payloads (10KB-ish), big enough to see eviction with a low
         # CACHE_MAX_BYTES override, small enough to keep S3 egress trivial.
-        data = f"Velocity CDN demo file #{i} — {uuid.uuid4()}\n".encode() * 400
+        data = f"Velocity CDN demo file #{i}, {uuid.uuid4()}\n".encode() * 400
         try:
             upload(args.origin, key, data)
         except urllib.error.URLError as exc:

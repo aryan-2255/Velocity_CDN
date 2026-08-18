@@ -28,7 +28,7 @@ class EdgeRegistry:
     one re-reads the registry from Origin (picks up new/renamed edges), the
     other pings each edge's /health and writes status changes back to Origin
     (source of truth for edges.status lives in Postgres, but only Origin can
-    write to it — see origin_client)."""
+    write to it, see origin_client)."""
 
     def __init__(self, http_client: httpx.AsyncClient):
         self._http = http_client

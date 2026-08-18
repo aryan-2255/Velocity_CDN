@@ -48,7 +48,7 @@
     </radialGradient>
   </defs>
 
-  <text class="title" x="28" y="32">Velocity CDN — live routing across three continents</text>
+  <text class="title" x="28" y="32">Velocity CDN: live routing across three continents</text>
   <text class="sub"   x="28" y="52">Each client goes to its nearest healthy edge by great-circle distance. Latencies are measured p50s from the running deployment.</text>
 
   <!-- graticule: reads as a world map without hand-drawn coastlines -->
@@ -75,7 +75,7 @@
 
   <!-- ============ backhaul: only travelled on a miss ============ -->
   <path class="backhaul" d="M 690,250 Q 490,150 318,196" marker-end="url(#am)"/>
-  <text class="meta" x="412" y="170" text-anchor="middle" fill="var(--miss)">on a miss only — once per key</text>
+  <text class="meta" x="412" y="170" text-anchor="middle" fill="var(--miss)">on a miss only, once per key</text>
 
   <!-- ============ origin ============ -->
   <circle cx="285" cy="197" r="42" fill="url(#oglow)"/>
@@ -162,7 +162,7 @@
     <animate attributeName="opacity" dur="9s" repeatCount="indefinite" values="0;0;.95;0" keyTimes="0;0.79;0.82;0.93"/>
   </circle>
   <text class="meta" x="660" y="300" text-anchor="end" fill="var(--miss)" opacity="0">
-    stored — every later request is a hit
+    stored, so every later request is a hit
     <animate attributeName="opacity" dur="9s" repeatCount="indefinite"
       values="0;0;1;1;0" keyTimes="0;0.80;0.84;0.93;0.97"/>
   </text>
@@ -180,7 +180,7 @@
 
   <circle cx="36" cy="552" r="5.5" fill="var(--origin)"/>
   <text class="key" x="50" y="556" fill="var(--origin)">origin</text>
-  <text class="meta" x="102" y="556">source of truth — S3 holds the bytes, Postgres holds the checksum and version</text>
+  <text class="meta" x="102" y="556">source of truth. S3 holds the bytes, Postgres holds the checksum and version</text>
 
   <text class="meta" x="972" y="556" text-anchor="end" opacity=".85">25 concurrent misses collapse to 1 origin fetch</text>
 </svg>

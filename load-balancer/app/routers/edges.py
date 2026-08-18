@@ -30,7 +30,7 @@ async def list_edges(request: Request) -> list[dict]:
 @router.get("/origin")
 async def origin_status(request: Request) -> dict:
     """Origin's health as the dashboard sees it. Unreachable is a status, not an
-    error — an Origin that's down still lets edges serve hits (and stale copies),
+    error, an Origin that's down still lets edges serve hits (and stale copies),
     which is exactly the resilience worth showing."""
     http_client: httpx.AsyncClient = request.app.state.http_client
     try:
@@ -44,7 +44,7 @@ async def origin_status(request: Request) -> dict:
 @router.get("/regions")
 async def list_regions(request: Request) -> dict:
     """Manual-override choices, each resolved through the *same* rank_edges()
-    the real /fetch path uses — so what the dropdown promises is what routing
+    the real /fetch path uses, so what the dropdown promises is what routing
     actually does, including when an edge is unhealthy and drops out."""
     registry = request.app.state.registry
     edges = registry.all()
@@ -62,7 +62,7 @@ async def list_regions(request: Request) -> dict:
             "nearest_edge": nearest.name if nearest else None,
             "distance_km": round(distance_km) if distance_km is not None else None,
             # "local" means an edge sits in this city, so the choice doesn't
-            # exercise cross-region routing — the dashboard groups on this.
+            # exercise cross-region routing, the dashboard groups on this.
             "has_local_edge": distance_km is not None and distance_km <= LOCAL_EDGE_RADIUS_KM,
         })
     return {"geoip_enabled": geoip_available(), "regions": out}

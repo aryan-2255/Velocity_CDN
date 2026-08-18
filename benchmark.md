@@ -1,6 +1,6 @@
 # Benchmark results
 
-Measured against the real AWS deployment on 2026-08-18 — Origin in us-east-1,
+Measured against the real AWS deployment on 2026-08-18. Origin in us-east-1,
 edges in ap-south-1 / eu-central-1 / ap-southeast-1, all on t4g.micro.
 
 These are **numbers from a scripted run, not a Locust load test.** Real
@@ -14,15 +14,15 @@ under sustained concurrency.
 - **Client:** single laptop (India) driving the Load Balancer's public IP in
   us-east-1, 12 concurrent requests, region chosen via the `?region=` override.
 - **Files:** 9 assets, 23 B to 11.8 MB (images, JS, CSS, JSON, video).
-- **Workload:** Zipf-ish — a hot set of 4 files takes ~70% of traffic, spread
+- **Workload:** Zipf-ish. A hot set of 4 files takes ~70% of traffic, spread
   across 24 client cities.
 - **Latency measured:** server-side at the Load Balancer
-  (`request_logs.latency_ms`) — LB to edge and back. Excludes the client's own
+  (`request_logs.latency_ms`), covering LB to edge and back. Excludes the client's own
   hop to us-east-1, which would otherwise measure my ISP rather than the CDN.
 - **Cold start:** edges restarted and `request_logs` truncated immediately
   before the run, so the hit ratio climbs from zero rather than resuming warm.
 
-## Results — latency by cache outcome
+## Results, latency by cache outcome
 
 | | p50 | p95 | n |
 |---|---|---|---|
@@ -31,7 +31,7 @@ under sustained concurrency.
 
 **Speedup: 3.5x at p50.**
 
-## Results — per edge
+## Results, per edge
 
 | Edge | Region | Outcome | p50 | p95 | n |
 |---|---|---|---|---|---|
@@ -58,20 +58,20 @@ An earlier near-sequential run over 99 requests gave 218ms hit / 1152ms miss
 (5.3x). Both are real; the contended run is published as the headline because
 it's the more conservative claim and the larger sample.
 
-## Throughput — how many requests per second
+## Throughput, how many requests per second
 
 Measured with a concurrent async client, run **on the instances themselves** so
 the test client's own internet connection isn't what's being measured.
 
 ### Edge serving from cache (client on the edge box, no network in the path)
 
-This is the application's own ceiling — one `uvicorn` worker on a t4g.micro
+This is the application's own ceiling: one `uvicorn` worker on a t4g.micro
 (2 vCPU, 1GB RAM), with the load generator competing for the same 2 vCPUs, so
 these are conservative.
 
 | File size | Concurrency | Throughput | Bandwidth | p50 | p99 |
 |---|---|---|---|---|---|
-| 23 B | 20 | **472 req/s** | — | 27 ms | 199 ms |
+| 23 B | 20 | **472 req/s** | n/a | 27 ms | 199 ms |
 | 130 KB | 20 | **416 req/s** | 53 MB/s | 22 ms | 321 ms |
 
 ### Full path through the Load Balancer, cross-region
@@ -83,7 +83,7 @@ LB in us-east-1 → edge in eu-central-1 → back.
 | 10 | 96 req/s | 99 ms | 218 ms |
 | 50 | 90 req/s | 510 ms | 1214 ms |
 
-**Throughput does not improve past ~95 req/s — added concurrency only inflates
+**Throughput does not improve past ~95 req/s. Added concurrency only inflates
 latency.** That's the signature of a network-bound system, not a CPU-bound one:
 the ~90ms Atlantic round trip to Frankfurt dominates, so the LB is idle waiting
 on the wire. At concurrency 10 the arithmetic is exactly 10 ÷ 0.1s ≈ 100 req/s.
@@ -92,7 +92,7 @@ on the wire. At concurrency 10 the arithmetic is exactly 10 ÷ 0.1s ≈ 100 req/
 
 The edge can serve ~470 req/s; the cross-region hop caps the end-to-end path at
 ~95 req/s. **Scaling this would mean more edges closer to users, not bigger
-instances** — which is the entire argument for a CDN, and here it's measured
+instances**, which is the entire argument for a CDN, and here it's measured
 rather than asserted.
 
 Known ceilings, none of which have been hit yet:
@@ -100,12 +100,12 @@ Known ceilings, none of which have been hit yet:
 - **Single uvicorn worker.** No `--workers` flag, so one process per service.
   On 2 vCPUs, 2–4 workers would plausibly double or triple the edge number.
 - **t4g.micro network baseline.** "Up to 5 Gigabit" is burst credit, not
-  sustained. Serving 1MB files at even 100 req/s is 800 Mbps — bandwidth, not
-  CPU, becomes the wall for large assets.
+  sustained. Serving 1MB files at even 100 req/s is 800 Mbps, so bandwidth rather
+  than CPU becomes the wall for large assets.
 - **Cache is in-process.** Restarting an edge empties it. Fine here; a real
   deployment would want a shared or persistent tier.
 
-**For scale context:** 1,000,000 req/s is Cloudflare/Fastly territory — tens of
+**For scale context:** 1,000,000 req/s is Cloudflare/Fastly territory: tens of
 thousands of machines and custom networking. At 470 req/s per instance you'd
 need roughly 2,100 of these boxes to reach it, ignoring coordination overhead
 entirely. This project is a correct, measured CDN at small scale, and that's the
@@ -123,7 +123,7 @@ freshly uploaded 400KB file that no edge had seen:
 
 Counted from Origin's own access log. Without the per-key `asyncio.Lock` in
 `edge/app/cache_manager.py`, a cold-cache traffic spike becomes a thundering
-herd against Origin — 25 duplicate S3 reads for one file.
+herd against Origin: 25 duplicate S3 reads for one file.
 
 All 25 are still logged as `miss`, which is correct: none were served from
 cache. The saving is in Origin load, not in the labelling.
@@ -146,13 +146,13 @@ Then re-requesting the two ends:
 - `ev/1.txt` → **miss** (evicted, as LRU should)
 - `ev/5.txt` → **hit** (most recent, survived)
 
-**The cap was never exceeded** — occupancy held at 880KB because a fourth
+**The cap was never exceeded.** Occupancy held at 880KB because a fourth
 293KB entry would have crossed 1MB. `cache_events` recorded each eviction with
 `reason=lru_evict`, so the policy that fired is attributable after the fact.
 
 This is the test that makes the eviction-policy work real rather than
 theoretical. Note the production edges run a 200MB cap against a ~15MB working
-set, so **eviction never fires there** — which is exactly why the LRU/LFU/FIFO
+set, so **eviction never fires there**, which is exactly why the LRU/LFU/FIFO
 hit-ratio comparison below is still not a meaningful experiment.
 
 ## Invalidation on update, verified
@@ -167,7 +167,7 @@ hit-ratio comparison below is still not a meaningful experiment.
 `invalidations.propagated_to` recorded
 `{"edge-mumbai": "ok", "edge-frankfurt": "ok", "edge-singapore": "ok"}`.
 
-No edge served the stale copy after the update — the push purge beat the next
+No edge served the stale copy after the update: the push purge beat the next
 read, which is the property that matters. Per-edge success is tracked so a
 partial propagation failure is visible rather than silent.
 
@@ -182,7 +182,7 @@ minutes), against the local stack so the live deployment was untouched:
 |---|---|---|---|---|
 | 1 | up | none | `miss` | cold fetch |
 | 2 | up | fresh | `hit` | inside TTL |
-| 3 | up | **expired** | `miss` | revalidated normally — expiry alone is not "stale" |
+| 3 | up | **expired** | `miss` | revalidated normally, expiry alone is not "stale" |
 | 4 | **down** | **expired** | **`stale`** | served old bytes + `Warning: 110 - Response is stale` |
 | 5 | **down** | none | `502` | nothing to fall back to |
 | 6 | back up | expired | `miss` | recovered, revalidates again |
@@ -192,10 +192,10 @@ the edge had seen before was still served; the key it had never seen returned
 502. That is the entire value of retaining expired entries instead of evicting
 at TTL.
 
-Step 3 is the part people get wrong — **TTL expiry alone does not produce a
+Step 3 is the part people get wrong, **TTL expiry alone does not produce a
 stale serve.** Stale requires both conditions: expired *and* Origin unreachable.
 
-Edge counters afterwards read `hits=1 misses=2 stale_serves=1 errors=1` — stale
+Edge counters afterwards read `hits=1 misses=2 stale_serves=1 errors=1`, stale
 is tracked separately rather than folded into hits, so a healthy-looking hit
 ratio can't quietly hide degraded serving.
 

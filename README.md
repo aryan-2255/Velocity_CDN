@@ -1,19 +1,19 @@
 # Velocity CDN
 
-**A content delivery network built from scratch — not a wrapper around CloudFront.**
+**A content delivery network built from scratch, not a wrapper around CloudFront.**
 
 One Origin holds the source of truth. Three Edge nodes on three continents hold
-a bounded, lazily-populated cache. A Load Balancer resolves the client's real
+a bounded, lazily populated cache. A Load Balancer resolves the client's real
 location by IP and routes to the nearest healthy edge, failing over
 automatically when one dies. Every request is logged and rendered live.
 
 Running on four AWS EC2 instances in four real regions. **A cache hit is 3.5×
-faster than a miss** — 458 ms vs 1620 ms at p50 across 541 requests from 24
+faster than a miss**, 458 ms vs 1620 ms at p50 across 541 requests from 24
 client cities.
 
 ![How a request flows through Velocity CDN](docs/images/request-flow.svg)
 
-Follow the dots. Blue requests reach their nearest edge and turn straight back —
+Follow the dots. Blue requests reach their nearest edge and turn straight back,
 the bytes are already in that edge's memory. The orange one is a cache miss:
 it has to cross to Virginia, and when it returns the edge **stores** what it got
 (the ring pulse), so every later request for that key becomes a blue one.
@@ -25,7 +25,7 @@ it has to cross to Virginia, and when it returns the edge **stores** what it got
 | | |
 |---|---|
 | **Geo-routing** | Real client IPs resolved through MaxMind GeoLite2, then ranked by great-circle distance. 33 client cities selectable for testing. |
-| **Edge caching** | Bounded in-RAM cache per edge — hard byte cap, per-entry TTL, pluggable eviction (LRU / LFU / FIFO). |
+| **Edge caching** | Bounded in-RAM cache per edge: hard byte cap, per-entry TTL, pluggable eviction (LRU / LFU / FIFO). |
 | **Failover** | Health checks every 10 s; an unhealthy edge is dropped from routing and traffic walks to the next-nearest. |
 | **Cache stampede protection** | 25 simultaneous requests for one uncached key produce exactly **one** origin fetch. |
 | **Invalidation** | Updating or deleting a file pushes a purge to every edge, with per-edge success recorded. |
@@ -51,18 +51,18 @@ Per edge, the geography is visible in the data:
 | edge-singapore | ap-southeast-1 | 836 ms | 2003 ms | 2.4× |
 
 Frankfurt is closest to the us-east-1 Origin, so its miss penalty is smallest.
-Singapore is furthest and pays the most. Nobody programmed that ordering — it's
+Singapore is furthest and pays the most. Nobody programmed that ordering, it's
 the speed of light through fibre, showing up in a database table.
 
 **Throughput:** an edge serves **472 req/s** from cache on a t4g.micro. End to
 end through the Load Balancer it's ~95 req/s, and that ceiling is
-**network-bound, not CPU-bound** — concurrency past 10 only inflates latency,
+**network-bound, not CPU-bound**. Concurrency past 10 only inflates latency,
 because the Atlantic round trip dominates. That is the argument for the whole
 architecture, stated as a measurement: you scale this by moving edges closer to
 users, not by buying bigger instances.
 
-**Verified behaviours**, each tested rather than asserted — method and raw
-numbers in [benchmark.md](benchmark.md):
+**Verified behaviours**, each tested rather than asserted. Method and raw
+numbers are in [benchmark.md](benchmark.md):
 
 | Claim | Result |
 |---|---|
@@ -79,8 +79,8 @@ here by hand:
 
 | Instead of | This project uses |
 |---|---|
-| CloudFront | A Load Balancer written in FastAPI — GeoIP resolution, haversine ranking, health checks, failover |
-| Application Load Balancer | The same service. **No AWS ALB exists in this account** — routing decisions are application code, not console config |
+| CloudFront | A Load Balancer written in FastAPI: GeoIP resolution, haversine ranking, health checks, failover |
+| Application Load Balancer | The same service. **No AWS ALB exists in this account**. Routing decisions are application code, not console config |
 | ElastiCache | An in-process cache per edge with a hard byte cap, TTL, and pluggable eviction |
 | RDS | PostgreSQL installed directly on the Origin instance |
 
@@ -97,8 +97,8 @@ flowchart TD
     C["Client<br/>(São Paulo)"] -->|"GET /fetch/logo.png"| LB
     LB["<b>Load Balancer</b><br/>us-east-1<br/>GeoIP → lat/lon<br/>rank edges by distance"]
     LB -->|"nearest healthy"| E["<b>Edge</b><br/>eu-central-1<br/>in-RAM cache"]
-    E -->|"HIT — serve from RAM<br/>~284 ms"| C
-    E -.->|"MISS — single-flight fetch"| O["<b>Origin</b><br/>us-east-1<br/>FastAPI + boto3"]
+    E -->|"HIT, serve from RAM<br/>~284 ms"| C
+    E -.->|"MISS, single-flight fetch"| O["<b>Origin</b><br/>us-east-1<br/>FastAPI + boto3"]
     O -.-> S3[("S3<br/>bytes")]
     O -.-> PG[("PostgreSQL<br/>metadata")]
     O -.->|"~977 ms, then cached"| E
@@ -106,7 +106,7 @@ flowchart TD
 ```
 
 The dotted path runs **once per key per edge**. Every subsequent request for
-that key takes the solid path and never touches the Origin at all — that's the
+that key takes the solid path and never touches the Origin at all, that's the
 entire point of a CDN, and the 3.5× gap is the measurement of it.
 
 ### The four possible outcomes
@@ -118,7 +118,7 @@ entire point of a CDN, and the 3.5× gap is the measurement of it.
 | `stale` | TTL expired **and** Origin unreachable → old copy + `Warning: 110` | ✅ possibly outdated |
 | `error` | 404 (no such file) or 502 (Origin down, nothing cached) | ❌ |
 
-**A miss is not a failure.** Three of the four still deliver the file — a miss
+**A miss is not a failure.** Three of the four still deliver the file, a miss
 just costs a round trip to Virginia. An entry becomes a miss when it's never
 been requested at this edge, when its TTL expires, when it's evicted to make
 room, or when the edge process restarts.
@@ -133,7 +133,7 @@ sequenceDiagram
     participant O as Origin
     participant S as S3
 
-    Note over C,S: First request — cold cache
+    Note over C,S: First request, cold cache
     C->>LB: GET /fetch/logo.png
     LB->>LB: GeoIP → nearest healthy edge
     LB->>E: GET /content/logo.png
@@ -147,7 +147,7 @@ sequenceDiagram
     E-->>LB: 200 X-Cache-Result: miss
     LB-->>C: bytes (~1620 ms)
 
-    Note over C,S: Every request after — warm cache
+    Note over C,S: Every request after, warm cache
     C->>LB: GET /fetch/logo.png
     LB->>E: GET /content/logo.png
     E->>E: cache lookup → HIT
@@ -186,13 +186,13 @@ flowchart LR
 | Component | Region | Instance |
 |---|---|---|
 | Origin + Load Balancer + Dashboard | us-east-1 | t4g.micro |
-| Edge — Mumbai (LRU) | ap-south-1 | t4g.micro |
-| Edge — Frankfurt (LFU) | eu-central-1 | t4g.micro |
-| Edge — Singapore (FIFO) | ap-southeast-1 | t4g.micro |
+| Edge. Mumbai (LRU) | ap-south-1 | t4g.micro |
+| Edge. Frankfurt (LFU) | eu-central-1 | t4g.micro |
+| Edge. Singapore (FIFO) | ap-southeast-1 | t4g.micro |
 
 Three containers run on the us-east-1 box; each edge is one container on its own
 instance in its own region. Every service is an independent FastAPI process with
-its own memory — nothing is shared, so cache hits and misses are real rather
+its own memory. Nothing is shared, so cache hits and misses are real rather
 than simulated.
 
 Origin is the only service holding database credentials; the Load Balancer and
@@ -209,7 +209,7 @@ difference between this and CloudFront.
 
 ## The dashboard
 
-Everything on it is live — no mock data, no seeded numbers.
+Everything on it is live. No mock data, no seeded numbers.
 
 ![Velocity CDN dashboard](docs/images/dashboard-light.png)
 
@@ -221,12 +221,12 @@ the request ID that correlates this request across all three services.
 
 The city dropdown is generated by the Load Balancer using the *same*
 `rank_edges()` the real routing path uses, so what it promises is what actually
-happens — including when an edge goes unhealthy and drops out. Cities are
+happens, including when an edge goes unhealthy and drops out. Cities are
 grouped by whether an edge is local, because the ones *without* a local edge are
 what actually exercise nearest-edge selection.
 
 **Origin files.** Upload and delete without touching a terminal. Uploads go
-through Origin's API, which writes S3 and the metadata row together — the
+through Origin's API, which writes S3 and the metadata row together. The
 `version` column is what invalidation compares against, and deleting pushes a
 purge to every edge.
 
@@ -246,7 +246,7 @@ The dashboard follows your system theme:
 
 `CachePolicy` is an interface ([`edge/app/cache/base.py`](edge/app/cache/base.py))
 with `LRUPolicy`, `LFUPolicy`, and `FIFOPolicy` implementations. Each edge picks
-one via the `CACHE_POLICY` env var — swapping it touches no routing or fetch
+one via the `CACHE_POLICY` env var, and swapping it touches no routing or fetch
 code. All three run simultaneously in production, one per edge, so a single
 workload exercises every implementation.
 
@@ -256,7 +256,7 @@ eviction was logged with `reason=lru_evict`.
 
 **The three policies currently report identical hit ratios, and that is not a
 finding.** The production edges run a 200 MB cap against a ~15 MB working set,
-so nothing is ever evicted — and with zero evictions LRU, LFU and FIFO are the
+so nothing is ever evicted, and with zero evictions LRU, LFU and FIFO are the
 same code path. Making this a real comparison needs a working set that exceeds
 `CACHE_MAX_BYTES`.
 
@@ -273,16 +273,16 @@ Client IPs resolve to real coordinates via MaxMind GeoLite2 City, logged as
 | Telkom (South Africa) | Heidelberg, ZA | edge-mumbai |
 | Jio (India) | IN | edge-mumbai |
 
-South Africa routing to Mumbai rather than Frankfurt is correct — it's ~1,000 km
+South Africa routing to Mumbai rather than Frankfurt is correct, it's ~1,000 km
 closer across the Indian Ocean.
 
 The database is refreshed weekly by `geoipupdate` via `/etc/cron.weekly/`, which
-also restarts the Load Balancer — `geoip.py` caches the reader for the process
+also restarts the Load Balancer, because `geoip.py` caches the reader for the process
 lifetime, so a new file on disk isn't picked up until the process reopens it.
 
 Without a database the service degrades cleanly rather than failing: it falls
 back to Origin's home region, logs `resolution_method=geoip_unresolved`, and the
-dropdown reads "Auto (GeoIP — disabled)" instead of silently pretending. Setup
+dropdown reads "Auto (GeoIP: disabled)" instead of silently pretending. Setup
 instructions in [`geoip/README.md`](geoip/README.md).
 
 ## Running it locally
@@ -294,17 +294,17 @@ docker compose up --build
 ```
 
 Brings up Postgres, MinIO (stands in for S3), Origin, three Edges, the Load
-Balancer, and the dashboard — each in its own container with its own memory.
+Balancer, and the dashboard. Each runs in its own container with its own memory.
 
-- Dashboard — http://localhost:5174
-- Load Balancer API — http://localhost:8080
-- Origin API — http://localhost:8000
-- MinIO console — http://localhost:9011 (`minioadmin` / `minioadmin`)
+- Dashboard, http://localhost:5174
+- Load Balancer API, http://localhost:8080
+- Origin API, http://localhost:8000
+- MinIO console, http://localhost:9011 (`minioadmin` / `minioadmin`)
 
 ```bash
 python3 scripts/seed_demo.py --count 20
 curl "http://localhost:8080/fetch/demo/file-00.txt?region=mumbai" -D -
-# run it twice — the second returns X-Cache-Result: hit
+# run it twice, the second returns X-Cache-Result: hit
 ```
 
 For sustained traffic:
@@ -314,7 +314,7 @@ pip install locust
 locust -f scripts/locustfile.py --host http://localhost:8080
 ```
 
-The workload is Zipf-distributed so a handful of files dominate — that's what
+The workload is Zipf-distributed so a handful of files dominate, that's what
 makes eviction-policy differences visible. Run it from a machine that isn't
 hosting an edge, or you're measuring your own loopback.
 
@@ -334,12 +334,12 @@ origin/            FastAPI + Postgres (SQLAlchemy async) + S3 (boto3)
 edge/              FastAPI + pluggable in-RAM cache (LRU/LFU/FIFO)
 load-balancer/     FastAPI + GeoIP + routing/failover + health checks
 frontend/          React + Tailwind + Recharts dashboard
-db/init.sql        Schema — source of truth, run via psql
+db/init.sql        Schema (source of truth, run via psql)
 scripts/           Locust load test + demo-file seeder
 docker-compose.yml Local stack (Postgres + MinIO + every service)
 docs/images/       Dashboard screenshots and the flow diagram
 DEMO.md            Walkthrough script for a video or live demo
-benchmark.md       Measured results, methodology, caveats
+benchmark.md       Measured results, methodology and caveats
 SPEC.md            The design doc this was built from
 ```
 
@@ -355,14 +355,14 @@ answer:
   detour. Anycast is the real answer; this isn't that.
 - **A single failed health check ejects an edge.** No consecutive-failure
   threshold, so a brief network blip causes a flap.
-- **The cache-policy comparison isn't yet an experiment** — see above.
+- **The cache-policy comparison isn't yet an experiment**, see above.
 - **Published numbers are a scripted run, not a load test.** 541 requests from
   one laptop, not Locust from a dedicated generator in its own region.
 - **Cache is in-process.** Restarting an edge empties it; there's no shared or
   persistent tier.
 - **Postgres is co-located with Origin.** No network hop on the metadata path,
   but one instance dying takes both down, and backups are manual. Migrating to
-  RDS is a connection-string change — same engine.
+  RDS is a connection-string change, same engine.
 - **Uploads must go through `POST /files`.** Writing directly to the S3 bucket
   leaves no metadata row, and Origin will 404 the key even though the bytes
   exist.

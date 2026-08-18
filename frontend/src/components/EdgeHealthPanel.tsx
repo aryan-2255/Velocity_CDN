@@ -23,7 +23,7 @@ export function EdgeHealthPanel() {
           setOrigin(originData);
         }
       } catch {
-        // LB or origin briefly unreachable — keep showing the last known state
+        // LB or origin briefly unreachable, keep showing the last known state
       }
     };
     poll();
@@ -41,14 +41,14 @@ export function EdgeHealthPanel() {
       </h2>
 
       {/* Origin sits above the edges because that's the direction a cache miss
-          travels — edges fall back to it, never the other way around. */}
+          travels, edges fall back to it, never the other way around. */}
       <OriginRow origin={origin} />
 
       <div
         className="mb-2 mt-3 border-t pt-3 text-[11px] uppercase tracking-wide"
         style={{ borderColor: "var(--gridline)", color: "var(--text-muted)" }}
       >
-        Edges — serve clients, fall back to origin on miss
+        Edges, serve clients, fall back to origin on miss
       </div>
 
       <div className="space-y-3">
@@ -139,7 +139,7 @@ function OriginRow({ origin }: { origin: OriginStatus | null }) {
 
       {!origin.reachable && (
         <p className="mt-1 text-xs" style={{ color: "var(--text-muted)" }}>
-          Edges keep serving cached copies while origin is down — expired entries fall back to{" "}
+          Edges keep serving cached copies while origin is down, expired entries fall back to{" "}
           <span style={{ color: "var(--series-3)" }}>stale</span> rather than failing.
         </p>
       )}

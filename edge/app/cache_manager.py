@@ -80,7 +80,7 @@ class CacheManager:
             self.hits += 1
             return CacheResult(entry.data, entry.content_type, "hit")
 
-        # Cold, or TTL-expired and needs revalidation — either way, single-flight the fetch.
+        # Cold, or TTL-expired and needs revalidation, either way, single-flight the fetch.
         task = self._inflight.get(key)
         if task is None:
             task = asyncio.create_task(self._fetch_and_store(key))
@@ -130,7 +130,7 @@ class CacheManager:
             )
 
         if size > self._max_bytes:
-            # Larger than the whole cache — can't hold it. Serve it once but don't cache it.
+            # Larger than the whole cache, can't hold it. Serve it once but don't cache it.
             return
 
         self._entries[key] = CacheEntry(data=data, content_type=content_type, stored_at=time.time(), size=size)

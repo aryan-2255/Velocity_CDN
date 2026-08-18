@@ -1,4 +1,4 @@
-"""Origin is the only service with DB credentials — the LB reaches every
+"""Origin is the only service with DB credentials, the LB reaches every
 piece of persisted state (edge registry, request logs, analytics) through
 Origin's /internal/* API (master spec section 4)."""
 

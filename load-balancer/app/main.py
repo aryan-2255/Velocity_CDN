@@ -29,7 +29,7 @@ async def lifespan(app: FastAPI):
     await http_client.aclose()
 
 
-app = FastAPI(title="Velocity CDN — Load Balancer", lifespan=lifespan)
+app = FastAPI(title="Velocity CDN. Load Balancer", lifespan=lifespan)
 
 app.add_middleware(
     CORSMiddleware,

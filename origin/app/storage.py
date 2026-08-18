@@ -34,7 +34,7 @@ def _ensure_bucket_sync() -> None:
 
 
 async def ensure_bucket() -> None:
-    """Retries on startup — in docker-compose, MinIO's port can be open before
+    """Retries on startup, in docker-compose, MinIO's port can be open before
     it's actually ready to serve, and there's no strict service_healthy gate on it."""
     attempts = 15
     for attempt in range(1, attempts + 1):
@@ -57,7 +57,7 @@ def _head_bucket_sync() -> bool:
 
 
 async def bucket_reachable() -> bool:
-    """Cheap liveness probe for the health endpoint — head_bucket transfers no
+    """Cheap liveness probe for the health endpoint, head_bucket transfers no
     object data, so this is safe to call on every health check."""
     return await asyncio.to_thread(_head_bucket_sync)
 

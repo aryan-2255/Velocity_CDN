@@ -1,5 +1,5 @@
 """Everything the dashboard talks to. Per the architecture diagram, the
-Dashboard only ever calls the Load Balancer — analytics live in Origin's
+Dashboard only ever calls the Load Balancer, analytics live in Origin's
 Postgres, so these are thin passthroughs to Origin's /internal/* API."""
 
 import asyncio
@@ -23,7 +23,7 @@ async def logs_recent(request: Request, since_id: int = 0, limit: int = 50) -> l
 
 @router.get("/files")
 async def list_files(request: Request) -> list[dict]:
-    """What's actually available to fetch — lets the dashboard offer real keys
+    """What's actually available to fetch, lets the dashboard offer real keys
     instead of a hardcoded example that may not exist."""
     http_client: httpx.AsyncClient = request.app.state.http_client
     return await origin_client.list_files(http_client, settings.origin_base_url)
@@ -34,7 +34,7 @@ async def upload_file(request: Request, upload: UploadFile, key: str | None = No
     """Passthrough to Origin's upload so the dashboard can add files without
     talking to Origin directly (the dashboard only ever calls the LB).
 
-    Going through this path is what keeps S3 and the files table in step —
+    Going through this path is what keeps S3 and the files table in step,
     writing to the bucket directly leaves no row, and every fetch for that key
     then 404s even though the bytes exist.
     """
@@ -61,7 +61,7 @@ async def upload_file(request: Request, upload: UploadFile, key: str | None = No
 
 @router.delete("/files/{key:path}")
 async def delete_file(request: Request, key: str) -> dict:
-    """Deletes from S3 + DB and pushes a purge to every edge — the counterpart
+    """Deletes from S3 + DB and pushes a purge to every edge, the counterpart
     to upload, so the dashboard can clean up what it added."""
     http_client: httpx.AsyncClient = request.app.state.http_client
     try:
@@ -105,7 +105,7 @@ async def stats_edge_requests(request: Request) -> list[dict]:
 
 @router.get("/stream")
 async def stream(request: Request) -> StreamingResponse:
-    """SSE live feed. Per-connection polling of Origin's recent-logs endpoint —
+    """SSE live feed. Per-connection polling of Origin's recent-logs endpoint,
     honest request correlation, not a message bus. Fine at this scale."""
     http_client: httpx.AsyncClient = request.app.state.http_client
 

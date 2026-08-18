@@ -80,7 +80,7 @@ export function RegionSelector() {
   const runFetch = async () => {
     setLoading(true);
     setResult(null);
-    // Client-side timing, so it includes the browser's own round trip — the
+    // Client-side timing, so it includes the browser's own round trip, the
     // dashboard's charts show the server-side number the LB records instead.
     const started = performance.now();
     try {
@@ -129,7 +129,7 @@ export function RegionSelector() {
         Try a request
       </h2>
       <p className="mb-3 text-xs" style={{ color: "var(--text-muted)" }}>
-        Pick where the <em>client</em> is, not where a server is — cities with no local edge are the
+        Pick where the <em>client</em> is, not where a server is, cities with no local edge are the
         ones that exercise nearest-edge routing.
       </p>
       <div className="flex flex-wrap items-center gap-2">
@@ -154,7 +154,7 @@ export function RegionSelector() {
           className="rounded border px-2 py-1 text-sm"
           style={{ borderColor: "var(--border)", background: "var(--plane)", color: "var(--text-primary)" }}
         >
-          <option value="">{geoipEnabled === false ? "Auto (GeoIP — disabled)" : "Auto (GeoIP)"}</option>
+          <option value="">{geoipEnabled === false ? "Auto (GeoIP, disabled)" : "Auto (GeoIP)"}</option>
           {withEdge.length > 0 && (
             <optgroup label="Cities with an edge">
               {withEdge.map((r) => (
@@ -185,14 +185,14 @@ export function RegionSelector() {
       </div>
       {geoipEnabled === false && region === "" && (
         <p className="mt-2 text-xs" style={{ color: "var(--status-warning)" }}>
-          No GeoLite2 database loaded — "Auto" can't resolve the real client location and falls back
+          No GeoLite2 database loaded, "Auto" can't resolve the real client location and falls back
           to the Origin's region. Pick a city above to exercise routing.
         </p>
       )}
       {selected && selected.nearest_edge && (
         <p className="mt-2 text-xs" style={{ color: "var(--text-muted)" }}>
           A client in {selected.label} routes to <strong>{selected.nearest_edge}</strong>
-          {selected.distance_km !== null && ` — ${selected.distance_km.toLocaleString()} km away`}.
+          {selected.distance_km !== null && `, ${selected.distance_km.toLocaleString()} km away`}.
         </p>
       )}
       {result && <ResultPanel result={result} />}
@@ -200,7 +200,7 @@ export function RegionSelector() {
   );
 }
 
-/** Everything about the last request, up front — no scrolling to the feed to
+/** Everything about the last request, up front, no scrolling to the feed to
  *  find out what happened. */
 function ResultPanel({ result }: { result: FetchResult }) {
   if (!result.ok) {
@@ -225,10 +225,10 @@ function ResultPanel({ result }: { result: FetchResult }) {
         {result.cacheResult ?? "?"}
       </span>,
     ],
-    ["Served by", result.servedBy ?? "—"],
+    ["Served by", result.servedBy ?? "-"],
     ["Round trip", `${result.elapsedMs} ms`],
     ["Size", formatBytes(result.bytes)],
-    ["Type", result.contentType ?? "—"],
+    ["Type", result.contentType ?? "-"],
     ["Status", result.status],
   ];
 
@@ -253,7 +253,7 @@ function ResultPanel({ result }: { result: FetchResult }) {
               className="rounded px-1.5 py-0.5"
               style={{ background: "var(--status-warning)", color: "#000" }}
             >
-              failed over — nearest edge was unavailable
+              failed over, nearest edge was unavailable
             </span>
           )}
           {result.stale && (
@@ -261,14 +261,14 @@ function ResultPanel({ result }: { result: FetchResult }) {
               className="rounded px-1.5 py-0.5"
               style={{ background: "var(--status-warning)", color: "#000" }}
             >
-              stale — served past TTL, Origin unreachable
+              stale, served past TTL, Origin unreachable
             </span>
           )}
         </div>
       )}
       {result.requestId && (
         <div className="mt-2 text-[11px]" style={{ color: "var(--text-muted)" }}>
-          request id <span className="font-mono">{result.requestId}</span> — same id is logged at the
+          request id <span className="font-mono">{result.requestId}</span>, logged identically at the
           load balancer, edge, and origin
         </div>
       )}
