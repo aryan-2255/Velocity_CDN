@@ -1,0 +1,132 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 980 430" width="980" height="430"
+     role="img" aria-label="Animated diagram of a request through Velocity Cache. A cache hit travels client to load balancer to the nearest edge and returns in about 218 milliseconds. A cache miss continues from the edge to the origin and S3, taking about 1152 milliseconds, then the edge caches the result so later requests take the short path.">
+  <style>
+    /* Standalone SVG: rendered via img, so currentColor cannot inherit the
+       host page. Colors are declared explicitly and swapped by system theme. */
+    :root {
+      --ink:      #0b0b0b;
+      --muted:    #6b6a66;
+      --line:     #b9b8b0;
+      --surface:  #ffffff;
+      --panel:    #f4f3ef;
+      --hit:      #2a78d6;
+      --miss:     #d2551f;
+      --store:    #1baf7a;
+    }
+    @media (prefers-color-scheme: dark) {
+      :root {
+        --ink:     #f2f1ee;
+        --muted:   #9c9a94;
+        --line:    #4a4a46;
+        --surface: #161614;
+        --panel:   #201f1c;
+        --hit:     #57a0f5;
+        --miss:    #f07a44;
+        --store:   #35c793;
+      }
+    }
+    .box   { fill: var(--surface); stroke: var(--line); stroke-width: 1.5; rx: 8; }
+    .panel { fill: var(--panel);   stroke: var(--line); stroke-width: 1.2; rx: 8; }
+    .t     { fill: var(--ink);   font-family: ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif; }
+    .name  { font-size: 14px; font-weight: 600; }
+    .sub   { fill: var(--muted); font-size: 11px; font-family: ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif; }
+    .lbl   { fill: var(--muted); font-size: 11px; font-family: ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif; }
+    .wire  { stroke: var(--line); stroke-width: 1.6; fill: none; }
+    .wire-miss { stroke: var(--miss); stroke-width: 1.6; fill: none; stroke-dasharray: 5 4; opacity: .75; }
+    .key   { font-size: 12px; font-weight: 600; font-family: ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif; }
+  </style>
+
+  <defs>
+    <marker id="a" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
+      <path d="M0,0 L10,5 L0,10 z" fill="var(--line)"/>
+    </marker>
+    <marker id="am" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
+      <path d="M0,0 L10,5 L0,10 z" fill="var(--miss)"/>
+    </marker>
+  </defs>
+
+  <!-- ============ wires (drawn first, so boxes sit on top) ============ -->
+  <!-- client -> load balancer -->
+  <path class="wire" d="M 148,215 H 196" marker-end="url(#a)"/>
+  <!-- load balancer -> three edges -->
+  <path class="wire" d="M 348,190 C 372,190 372,110 392,110" marker-end="url(#a)"/>
+  <path class="wire" d="M 348,215 H 392" marker-end="url(#a)"/>
+  <path class="wire" d="M 348,240 C 372,240 372,320 392,320" marker-end="url(#a)"/>
+  <!-- edge -> origin, only on a miss -->
+  <path class="wire-miss" d="M 576,215 H 646" marker-end="url(#am)"/>
+  <!-- origin -> its two stores -->
+  <path class="wire" d="M 790,196 C 812,196 812,172 832,172" marker-end="url(#a)"/>
+  <path class="wire" d="M 790,234 C 812,234 812,262 832,262" marker-end="url(#a)"/>
+
+  <!-- ============ nodes ============ -->
+  <rect class="box" x="38"  y="188" width="110" height="54"/>
+  <text class="t name" x="93"  y="211" text-anchor="middle">Client</text>
+  <text class="sub"    x="93"  y="228" text-anchor="middle">anywhere</text>
+
+  <rect class="box" x="196" y="172" width="152" height="86"/>
+  <text class="t name" x="272" y="199" text-anchor="middle">Load Balancer</text>
+  <text class="sub"    x="272" y="216" text-anchor="middle">GeoIP → lat/lon</text>
+  <text class="sub"    x="272" y="232" text-anchor="middle">rank by distance</text>
+
+  <rect class="box" x="392" y="84"  width="184" height="52"/>
+  <text class="t name" x="484" y="105" text-anchor="middle">Edge · Mumbai</text>
+  <text class="sub"    x="484" y="121" text-anchor="middle">ap-south-1 · LRU</text>
+
+  <rect class="box" x="392" y="189" width="184" height="52"/>
+  <text class="t name" x="484" y="210" text-anchor="middle">Edge · Frankfurt</text>
+  <text class="sub"    x="484" y="226" text-anchor="middle">eu-central-1 · LFU</text>
+
+  <rect class="box" x="392" y="294" width="184" height="52"/>
+  <text class="t name" x="484" y="315" text-anchor="middle">Edge · Singapore</text>
+  <text class="sub"    x="484" y="331" text-anchor="middle">ap-southeast-1 · FIFO</text>
+
+  <rect class="box" x="646" y="180" width="144" height="70"/>
+  <text class="t name" x="718" y="205" text-anchor="middle">Origin</text>
+  <text class="sub"    x="718" y="222" text-anchor="middle">us-east-1</text>
+  <text class="sub"    x="718" y="238" text-anchor="middle">source of truth</text>
+
+  <rect class="panel" x="832" y="148" width="116" height="48"/>
+  <text class="t name" x="890" y="169" text-anchor="middle" style="font-size:13px">S3</text>
+  <text class="sub"    x="890" y="185" text-anchor="middle">file bytes</text>
+
+  <rect class="panel" x="832" y="238" width="116" height="48"/>
+  <text class="t name" x="890" y="259" text-anchor="middle" style="font-size:13px">PostgreSQL</text>
+  <text class="sub"    x="890" y="275" text-anchor="middle">metadata + logs</text>
+
+  <!-- ============ animated requests ============ -->
+  <!-- HIT: client -> LB -> edge -> back. Short route, quick loop. -->
+  <circle r="6" fill="var(--hit)">
+    <animateMotion dur="2.6s" repeatCount="indefinite"
+      keyPoints="0;1" keyTimes="0;1" calcMode="linear"
+      path="M 93,215 H 272 H 484 H 272 H 93"/>
+    <animate attributeName="opacity" dur="2.6s" repeatCount="indefinite"
+      values="0;1;1;1;1;0" keyTimes="0;0.06;0.4;0.6;0.94;1"/>
+  </circle>
+
+  <!-- MISS: continues to origin and S3 before returning. Same start, longer
+       route, and a duration scaled to the measured 5.3x gap. -->
+  <circle r="6" fill="var(--miss)">
+    <animateMotion dur="6.4s" repeatCount="indefinite"
+      keyPoints="0;1" keyTimes="0;1" calcMode="linear"
+      path="M 93,215 H 272 H 484 H 718 H 890 H 718 H 484 H 272 H 93"/>
+    <animate attributeName="opacity" dur="6.4s" repeatCount="indefinite"
+      values="0;1;1;1;1;0" keyTimes="0;0.04;0.4;0.6;0.96;1"/>
+  </circle>
+
+  <!-- cache-store pulse on the Frankfurt edge, after a miss returns through it -->
+  <circle cx="484" cy="215" r="7" fill="none" stroke="var(--miss)" stroke-width="2" opacity="0">
+    <animate attributeName="r"       dur="6.4s" repeatCount="indefinite" values="7;7;22;22"  keyTimes="0;0.62;0.74;1"/>
+    <animate attributeName="opacity" dur="6.4s" repeatCount="indefinite" values="0;0;.9;0"   keyTimes="0;0.62;0.66;0.78"/>
+  </circle>
+
+  <!-- ============ legend ============ -->
+  <circle cx="46" cy="386" r="6" fill="var(--hit)"/>
+  <text class="t key" x="60" y="390" fill="var(--hit)">cache hit</text>
+  <text class="lbl"   x="132" y="390">served from the edge's RAM — never reaches origin · p50 218 ms</text>
+
+  <circle cx="46" cy="410" r="6" fill="var(--miss)"/>
+  <text class="t key" x="60" y="414" fill="var(--miss)">cache miss</text>
+  <text class="lbl"   x="140" y="414">edge fetches from origin, stores it, then serves · p50 1152 ms — happens once per key</text>
+
+  <text class="lbl" x="611" y="236" text-anchor="middle">on a miss</text>
+</svg>

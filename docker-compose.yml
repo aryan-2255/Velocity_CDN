@@ -1,0 +1,128 @@
+x-edge-common: &edge-common
+  build: ./edge
+  environment: &edge-common-env
+    ORIGIN_BASE_URL: http://origin:8000
+    CACHE_MAX_BYTES: "209715200" # 200MB hard cap — see master spec section 2
+    CACHE_TTL_SECONDS: "300"
+  depends_on:
+    origin:
+      condition: service_started
+
+services:
+  postgres:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_USER: cdn
+      POSTGRES_PASSWORD: cdn
+      POSTGRES_DB: cdn
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+      - ./db/init.sql:/docker-entrypoint-initdb.d/init.sql:ro
+    ports:
+      - "5433:5432" # host 5433 -> avoid clashing with a local Postgres on 5432; container-internal traffic still uses 5432
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U cdn"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+  minio:
+    image: minio/minio:latest
+    command: server /data --console-address ":9001"
+    environment:
+      MINIO_ROOT_USER: minioadmin
+      MINIO_ROOT_PASSWORD: minioadmin
+    ports:
+      - "9010:9000"
+      - "9011:9001" # MinIO web console, login minioadmin/minioadmin — host ports shifted off 9000/9001, already held by another project's stack
+    volumes:
+      - minio_data:/data
+
+  origin:
+    build: ./origin
+    environment:
+      DATABASE_URL: postgresql+asyncpg://cdn:cdn@postgres:5432/cdn
+      S3_BUCKET: cdn-files
+      S3_REGION: us-east-1
+      S3_ENDPOINT_URL: http://minio:9000
+      AWS_ACCESS_KEY_ID: minioadmin
+      AWS_SECRET_ACCESS_KEY: minioadmin
+    depends_on:
+      postgres:
+        condition: service_healthy
+      minio:
+        condition: service_started
+    ports:
+      - "8000:8000"
+
+  edge-mumbai:
+    <<: *edge-common
+    environment:
+      <<: *edge-common-env
+      EDGE_NAME: edge-mumbai
+      REGION: ap-south-1
+      LAT: "19.0760"
+      LON: "72.8777"
+      PUBLIC_BASE_URL: http://edge-mumbai:8000
+      CACHE_POLICY: lru
+    ports:
+      - "8001:8000"
+
+  edge-frankfurt:
+    <<: *edge-common
+    environment:
+      <<: *edge-common-env
+      EDGE_NAME: edge-frankfurt
+      REGION: eu-central-1
+      LAT: "50.1109"
+      LON: "8.6821"
+      PUBLIC_BASE_URL: http://edge-frankfurt:8000
+      CACHE_POLICY: lfu # deliberately different from mumbai — proves the policy is pluggable per-edge
+    ports:
+      - "8002:8000"
+
+  edge-singapore:
+    <<: *edge-common
+    environment:
+      <<: *edge-common-env
+      EDGE_NAME: edge-singapore
+      REGION: ap-southeast-1
+      LAT: "1.3521"
+      LON: "103.8198"
+      PUBLIC_BASE_URL: http://edge-singapore:8000
+      CACHE_POLICY: fifo
+    ports:
+      - "8003:8000"
+
+  load-balancer:
+    build: ./load-balancer
+    environment:
+      ORIGIN_BASE_URL: http://origin:8000
+      GEOIP_DB_PATH: /geoip/GeoLite2-City.mmdb
+      TRUSTED_PROXIES: ""
+      CORS_ORIGINS: "*"
+    volumes:
+      - ./geoip:/geoip:ro # put GeoLite2-City.mmdb here if you have a MaxMind license key; optional
+    depends_on:
+      - origin
+      - edge-mumbai
+      - edge-frankfurt
+      - edge-singapore
+    ports:
+      - "8080:8000"
+
+  frontend:
+    build: ./frontend
+    environment:
+      VITE_LB_URL: http://localhost:8080
+    volumes:
+      - ./frontend:/app
+      - /app/node_modules # anonymous volume so the container's own install isn't shadowed by the bind mount
+    depends_on:
+      - load-balancer
+    ports:
+      - "5174:5173" # host port shifted off 5173, already held by another project's stack
+
+volumes:
+  postgres_data:
+  minio_data:
