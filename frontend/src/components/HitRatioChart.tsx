@@ -30,7 +30,8 @@ export function HitRatioChart() {
         Hit ratio over time
       </h2>
       <p className="mb-3 text-xs" style={{ color: "var(--text-muted)" }}>
-        Climbs from a cold start as edges warm up.
+        Per-minute buckets, quiet minutes omitted. Dips are cold keys arriving; the climb after is
+        the cache warming.
       </p>
       {data.length === 0 ? (
         <EmptyState />

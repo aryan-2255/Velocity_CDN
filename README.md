@@ -7,8 +7,9 @@ a bounded, lazily-populated cache. A Load Balancer resolves the client's real
 location by IP and routes to the nearest healthy edge, failing over
 automatically when one dies. Every request is logged and rendered live.
 
-Deployed on four AWS EC2 instances in four real regions. **A cache hit is 5.3×
-faster than a miss** — 218ms vs 1152ms at p50 across 99 requests.
+Deployed on four AWS EC2 instances in four real regions. **A cache hit is 3.5×
+faster than a miss** — 458ms vs 1620ms at p50 across 541 requests from 24 client
+cities.
 
 ![How a request flows through Velocity CDN](docs/images/request-flow.svg)
 
@@ -42,25 +43,30 @@ there'd be no cache to talk about.
 
 ## Measured results
 
-Real numbers from the live deployment, server-side latency recorded by the
-Load Balancer (excludes the browser's own round trip):
+541 requests from 24 client cities, 12 concurrent. Server-side latency as
+recorded by the Load Balancer, so the browser's own round trip is excluded:
 
 | | p50 | p95 | n |
 |---|---|---|---|
-| **Cache hit** | **218 ms** | 705 ms | 75 |
-| **Cache miss** | 1152 ms | 3166 ms | 24 |
+| **Cache hit** | **458 ms** | 1283 ms | 508 |
+| **Cache miss** | 1620 ms | 3315 ms | 33 |
 
 Per edge, the geography is visible in the data:
 
 | Edge | Region | Hit p50 | Miss p50 | Speedup |
 |---|---|---|---|---|
-| edge-frankfurt | eu-central-1 | **94 ms** | 866 ms | 9.2× |
-| edge-mumbai | ap-south-1 | 222 ms | 1364 ms | 6.1× |
-| edge-singapore | ap-southeast-1 | 222 ms | 1566 ms | 7.1× |
+| edge-frankfurt | eu-central-1 | **284 ms** | 977 ms | 3.4× |
+| edge-mumbai | ap-south-1 | 741 ms | 2009 ms | 2.7× |
+| edge-singapore | ap-southeast-1 | 836 ms | 2003 ms | 2.4× |
 
 Frankfurt is closest to the us-east-1 Origin, so its miss penalty is smallest.
-Singapore is furthest and pays the most. Nobody programmed that — it's the
-speed of light through fibre, showing up in a database table.
+Singapore is furthest and pays the most. Nobody programmed that ordering — it's
+the speed of light through fibre, showing up in a database table.
+
+These figures include queueing from 12-way concurrency. A near-sequential run
+measured earlier gave 218ms hit / 1152ms miss — better absolute numbers, smaller
+sample. The larger, more contended run is published here because it's the more
+conservative claim.
 
 **Failover, measured:** killing the Singapore edge mid-run was detected in ~25s
 and the next request was served by Mumbai instead — HTTP 200, no client-visible
@@ -82,17 +88,17 @@ flowchart TD
     C["Client<br/>(São Paulo)"] -->|"GET /fetch/logo.png"| LB
     LB["<b>Load Balancer</b><br/>us-east-1<br/>GeoIP → lat/lon<br/>rank edges by distance"]
     LB -->|"nearest healthy"| E["<b>Edge</b><br/>eu-central-1<br/>in-RAM cache"]
-    E -->|"HIT — serve from RAM<br/>~94 ms"| C
+    E -->|"HIT — serve from RAM<br/>~284 ms"| C
     E -.->|"MISS — single-flight fetch"| O["<b>Origin</b><br/>us-east-1<br/>FastAPI + boto3"]
     O -.-> S3[("S3<br/>bytes")]
     O -.-> PG[("PostgreSQL<br/>metadata")]
-    O -.->|"~866 ms, then cached"| E
+    O -.->|"~977 ms, then cached"| E
     LB -->|"log every request"| PG
 ```
 
 The dotted path runs **once per key per edge**. Every subsequent request for
 that key takes the solid path and never touches the Origin at all — that's the
-entire point of a CDN, and the 5.3× gap is the measurement of it.
+entire point of a CDN, and the 3.5× gap is the measurement of it.
 
 ### Cache miss vs. hit, step by step
 
@@ -116,14 +122,14 @@ sequenceDiagram
     O-->>E: bytes + ETag + version
     E->>E: store, evict if over cap
     E-->>LB: 200 X-Cache-Result: miss
-    LB-->>C: bytes (~1152 ms)
+    LB-->>C: bytes (~1620 ms)
 
     Note over C,S: Every request after — warm cache
     C->>LB: GET /fetch/logo.png
     LB->>E: GET /content/logo.png
     E->>E: cache lookup → HIT
     E-->>LB: 200 X-Cache-Result: hit
-    LB-->>C: bytes (~218 ms)
+    LB-->>C: bytes (~458 ms)
 ```
 
 ## Deployed topology
@@ -355,9 +361,10 @@ opening:
 
 ## Known gaps (called out, not hidden)
 
-- **The published numbers are a hand-driven run, not a load test.** 99 requests
-  from a single laptop, not Locust under concurrency. Real p99s need the load
-  generator on a 5th instance — the workload script is in `scripts/`.
+- **The published numbers are a scripted run, not a load test.** 541 requests
+  from a single laptop at 12-way concurrency, not Locust from a dedicated
+  generator. Real p99s under sustained load need that generator on a 5th
+  instance — the workload script is in `scripts/`.
 - **The cache-policy comparison is not yet a real experiment.** All three edges
   report the same hit ratio because the working set fits under the 200MB cap,
   so nothing ever evicts, so LRU/LFU/FIFO behave identically. This is written up

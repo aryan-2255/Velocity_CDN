@@ -1,5 +1,5 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 980 430" width="980" height="430"
-     role="img" aria-label="Animated diagram of a request through Velocity Cache. A cache hit travels client to load balancer to the nearest edge and returns in about 218 milliseconds. A cache miss continues from the edge to the origin and S3, taking about 1152 milliseconds, then the edge caches the result so later requests take the short path.">
+     role="img" aria-label="Animated diagram of a request through Velocity CDN. A cache hit travels client to load balancer to the nearest edge and returns in about 458 milliseconds. A cache miss continues from the edge to the origin and S3, taking about 1620 milliseconds, then the edge caches the result so later requests take the short path.">
   <style>
     /* Standalone SVG: rendered via img, so currentColor cannot inherit the
        host page. Colors are declared explicitly and swapped by system theme. */
@@ -104,7 +104,7 @@
   </circle>
 
   <!-- MISS: continues to origin and S3 before returning. Same start, longer
-       route, and a duration scaled to the measured 5.3x gap. -->
+       route, and a duration scaled to the measured 3.5x gap. -->
   <circle r="6" fill="var(--miss)">
     <animateMotion dur="6.4s" repeatCount="indefinite"
       keyPoints="0;1" keyTimes="0;1" calcMode="linear"
@@ -122,11 +122,11 @@
   <!-- ============ legend ============ -->
   <circle cx="46" cy="386" r="6" fill="var(--hit)"/>
   <text class="t key" x="60" y="390" fill="var(--hit)">cache hit</text>
-  <text class="lbl"   x="132" y="390">served from the edge's RAM — never reaches origin · p50 218 ms</text>
+  <text class="lbl"   x="132" y="390">served from the edge's RAM — never reaches origin · p50 458 ms</text>
 
   <circle cx="46" cy="410" r="6" fill="var(--miss)"/>
   <text class="t key" x="60" y="414" fill="var(--miss)">cache miss</text>
-  <text class="lbl"   x="140" y="414">edge fetches from origin, stores it, then serves · p50 1152 ms — happens once per key</text>
+  <text class="lbl"   x="140" y="414">edge fetches from origin, stores it, then serves · p50 1620 ms — happens once per key</text>
 
   <text class="lbl" x="611" y="236" text-anchor="middle">on a miss</text>
 </svg>

@@ -22,7 +22,16 @@ async def hit_ratio(db: AsyncSession = Depends(get_db)) -> dict:
 
 
 @router.get("/hit-ratio-timeseries")
-async def hit_ratio_timeseries(bucket_minutes: int = 1, db: AsyncSession = Depends(get_db)) -> list[dict]:
+async def hit_ratio_timeseries(
+    bucket_minutes: int = 1, min_samples: int = 5, db: AsyncSession = Depends(get_db)
+) -> list[dict]:
+    """Hit ratio over time, in time buckets.
+
+    Buckets with fewer than `min_samples` requests are dropped: a minute holding
+    one request plots as a hard 0% or 100% and reads as a dramatic swing, when
+    it's a sample size of one. Without this the chart sawtooths on idle periods
+    and buries the real trend.
+    """
     bucket = func.date_trunc("minute", RequestLog.ts)
     q = (
         select(bucket.label("bucket"), RequestLog.cache_result, func.count())
@@ -37,8 +46,10 @@ async def hit_ratio_timeseries(bucket_minutes: int = 1, db: AsyncSession = Depen
     out = []
     for ts, counts in sorted(buckets.items()):
         total = sum(counts.values())
+        if total < min_samples:
+            continue
         hits = counts.get("hit", 0)
-        out.append({"ts": ts, "hit_ratio": (hits / total) if total else 0.0, "total": total})
+        out.append({"ts": ts, "hit_ratio": hits / total, "total": total})
     return out
 
 
