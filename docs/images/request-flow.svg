@@ -1,132 +1,186 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 980 430" width="980" height="430"
-     role="img" aria-label="Animated diagram of a request through Velocity CDN. A cache hit travels client to load balancer to the nearest edge and returns in about 458 milliseconds. A cache miss continues from the edge to the origin and S3, taking about 1620 milliseconds, then the edge caches the result so later requests take the short path.">
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1000 600" width="1000" height="600"
+     role="img" aria-label="Map of Velocity CDN in operation. Clients in Sao Paulo, Lagos, Dubai, Tokyo and Sydney are each routed to the nearest of three edge caches in Frankfurt, Mumbai and Singapore. Cache hits are served from the edge's own memory in about 458 milliseconds. On a cache miss the edge fetches once from the origin in Virginia, which reads bytes from S3 and metadata from Postgres, then stores the result so every later request is a hit.">
   <style>
-    /* Standalone SVG: rendered via img, so currentColor cannot inherit the
-       host page. Colors are declared explicitly and swapped by system theme. */
+    /* Standalone SVG served through an img tag: currentColor cannot inherit
+       from the host page, so every colour is explicit and swaps on theme. */
     :root {
-      --ink:      #0b0b0b;
-      --muted:    #6b6a66;
-      --line:     #b9b8b0;
-      --surface:  #ffffff;
-      --panel:    #f4f3ef;
-      --hit:      #2a78d6;
-      --miss:     #d2551f;
-      --store:    #1baf7a;
+      --ink: #10100f; --muted: #6f6e69; --faint: #d5d4cd;
+      --grid: #eeede8; --panel: #f5f4f0; --edgefill: #eaf2fd;
+      --hit: #1f6fd0; --miss: #d2551f; --origin: #6b46c1;
     }
     @media (prefers-color-scheme: dark) {
       :root {
-        --ink:     #f2f1ee;
-        --muted:   #9c9a94;
-        --line:    #4a4a46;
-        --surface: #161614;
-        --panel:   #201f1c;
-        --hit:     #57a0f5;
-        --miss:    #f07a44;
-        --store:   #35c793;
+        --ink: #f4f3f0; --muted: #9b9993; --faint: #3d3d38;
+        --grid: #232320; --panel: #1e1e1b; --edgefill: #14202f;
+        --hit: #5aa2f7; --miss: #f07a44; --origin: #a78bfa;
       }
     }
-    .box   { fill: var(--surface); stroke: var(--line); stroke-width: 1.5; rx: 8; }
-    .panel { fill: var(--panel);   stroke: var(--line); stroke-width: 1.2; rx: 8; }
-    .t     { fill: var(--ink);   font-family: ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif; }
-    .name  { font-size: 14px; font-weight: 600; }
-    .sub   { fill: var(--muted); font-size: 11px; font-family: ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif; }
-    .lbl   { fill: var(--muted); font-size: 11px; font-family: ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif; }
-    .wire  { stroke: var(--line); stroke-width: 1.6; fill: none; }
-    .wire-miss { stroke: var(--miss); stroke-width: 1.6; fill: none; stroke-dasharray: 5 4; opacity: .75; }
-    .key   { font-size: 12px; font-weight: 600; font-family: ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif; }
+    text { font-family: ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif; }
+    .grid    { stroke: var(--grid); stroke-width: 1; fill: none; }
+    .title   { fill: var(--ink); font-size: 15.5px; font-weight: 650; }
+    .sub     { fill: var(--muted); font-size: 11.5px; }
+    .city    { fill: var(--ink); font-size: 11.5px; font-weight: 600; }
+    .meta    { fill: var(--muted); font-size: 10.5px; }
+    .edgebox { fill: var(--edgefill); stroke: var(--hit); stroke-width: 1.4; }
+    .obox    { fill: var(--panel); stroke: var(--origin); stroke-width: 1.6; }
+    .sbox    { fill: var(--panel); stroke: var(--faint); stroke-width: 1.2; }
+    .route   { stroke: var(--hit); stroke-width: 1.5; fill: none; opacity: .42; }
+    .backhaul{ stroke: var(--miss); stroke-width: 1.6; fill: none; stroke-dasharray: 6 5; opacity: .85; }
+    .leader  { stroke: var(--hit); stroke-width: 1.2; opacity: .55; }
+    .name    { fill: var(--ink); font-size: 12.5px; font-weight: 650; }
+    .key     { font-size: 12px; font-weight: 650; }
   </style>
 
   <defs>
-    <marker id="a" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
-      <path d="M0,0 L10,5 L0,10 z" fill="var(--line)"/>
+    <marker id="ah" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="5.5" markerHeight="5.5" orient="auto-start-reverse">
+      <path d="M0,0 L10,5 L0,10 z" fill="var(--hit)" opacity=".5"/>
     </marker>
     <marker id="am" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
       <path d="M0,0 L10,5 L0,10 z" fill="var(--miss)"/>
     </marker>
+    <radialGradient id="glow">
+      <stop offset="0%" stop-color="var(--hit)" stop-opacity=".3"/>
+      <stop offset="100%" stop-color="var(--hit)" stop-opacity="0"/>
+    </radialGradient>
+    <radialGradient id="oglow">
+      <stop offset="0%" stop-color="var(--origin)" stop-opacity=".26"/>
+      <stop offset="100%" stop-color="var(--origin)" stop-opacity="0"/>
+    </radialGradient>
   </defs>
 
-  <!-- ============ wires (drawn first, so boxes sit on top) ============ -->
-  <!-- client -> load balancer -->
-  <path class="wire" d="M 148,215 H 196" marker-end="url(#a)"/>
-  <!-- load balancer -> three edges -->
-  <path class="wire" d="M 348,190 C 372,190 372,110 392,110" marker-end="url(#a)"/>
-  <path class="wire" d="M 348,215 H 392" marker-end="url(#a)"/>
-  <path class="wire" d="M 348,240 C 372,240 372,320 392,320" marker-end="url(#a)"/>
-  <!-- edge -> origin, only on a miss -->
-  <path class="wire-miss" d="M 576,215 H 646" marker-end="url(#am)"/>
-  <!-- origin -> its two stores -->
-  <path class="wire" d="M 790,196 C 812,196 812,172 832,172" marker-end="url(#a)"/>
-  <path class="wire" d="M 790,234 C 812,234 812,262 832,262" marker-end="url(#a)"/>
+  <text class="title" x="28" y="32">Velocity CDN — live routing across three continents</text>
+  <text class="sub"   x="28" y="52">Each client goes to its nearest healthy edge by great-circle distance. Latencies are measured p50s from the running deployment.</text>
 
-  <!-- ============ nodes ============ -->
-  <rect class="box" x="38"  y="188" width="110" height="54"/>
-  <text class="t name" x="93"  y="211" text-anchor="middle">Client</text>
-  <text class="sub"    x="93"  y="228" text-anchor="middle">anywhere</text>
+  <!-- graticule: reads as a world map without hand-drawn coastlines -->
+  <g class="grid">
+    <line x1="28" y1="130" x2="972" y2="130"/>
+    <line x1="28" y1="200" x2="972" y2="200"/>
+    <line x1="28" y1="270" x2="972" y2="270"/>
+    <line x1="28" y1="340" x2="972" y2="340"/>
+    <line x1="28" y1="410" x2="972" y2="410"/>
+    <line x1="180" y1="86" x2="180" y2="438"/>
+    <line x1="370" y1="86" x2="370" y2="438"/>
+    <line x1="560" y1="86" x2="560" y2="438"/>
+    <line x1="750" y1="86" x2="750" y2="438"/>
+    <line x1="920" y1="86" x2="920" y2="438"/>
+  </g>
+  <text class="meta" x="972" y="266" text-anchor="end" opacity=".65">equator</text>
 
-  <rect class="box" x="196" y="172" width="152" height="86"/>
-  <text class="t name" x="272" y="199" text-anchor="middle">Load Balancer</text>
-  <text class="sub"    x="272" y="216" text-anchor="middle">GeoIP → lat/lon</text>
-  <text class="sub"    x="272" y="232" text-anchor="middle">rank by distance</text>
+  <!-- ============ client → nearest edge, bowed like flight paths ============ -->
+  <path class="route" d="M 370,378 Q 430,235 519,174" marker-end="url(#ah)"/>
+  <path class="route" d="M 509,291 Q 496,215 519,180" marker-end="url(#ah)"/>
+  <path class="route" d="M 653,237 Q 676,232 696,248" marker-end="url(#ah)"/>
+  <path class="route" d="M 888,207 Q 852,240 796,298" marker-end="url(#ah)"/>
+  <path class="route" d="M 920,408 Q 878,350 795,314" marker-end="url(#ah)"/>
 
-  <rect class="box" x="392" y="84"  width="184" height="52"/>
-  <text class="t name" x="484" y="105" text-anchor="middle">Edge · Mumbai</text>
-  <text class="sub"    x="484" y="121" text-anchor="middle">ap-south-1 · LRU</text>
+  <!-- ============ backhaul: only travelled on a miss ============ -->
+  <path class="backhaul" d="M 690,250 Q 490,150 318,196" marker-end="url(#am)"/>
+  <text class="meta" x="412" y="170" text-anchor="middle" fill="var(--miss)">on a miss only — once per key</text>
 
-  <rect class="box" x="392" y="189" width="184" height="52"/>
-  <text class="t name" x="484" y="210" text-anchor="middle">Edge · Frankfurt</text>
-  <text class="sub"    x="484" y="226" text-anchor="middle">eu-central-1 · LFU</text>
+  <!-- ============ origin ============ -->
+  <circle cx="285" cy="197" r="42" fill="url(#oglow)"/>
+  <rect class="obox" x="226" y="176" width="118" height="42" rx="8"/>
+  <text class="name" x="285" y="194" text-anchor="middle">Origin</text>
+  <text class="meta" x="285" y="209" text-anchor="middle">us-east-1 · Virginia</text>
+  <line x1="254" y1="218" x2="254" y2="230" stroke="var(--faint)" stroke-width="1.2"/>
+  <line x1="316" y1="218" x2="316" y2="230" stroke="var(--faint)" stroke-width="1.2"/>
+  <rect class="sbox" x="226" y="230" width="56" height="36" rx="7"/>
+  <text class="meta" x="254" y="247" text-anchor="middle" fill="var(--ink)">S3</text>
+  <text class="meta" x="254" y="259" text-anchor="middle">bytes</text>
+  <rect class="sbox" x="288" y="230" width="56" height="36" rx="7"/>
+  <text class="meta" x="316" y="247" text-anchor="middle" fill="var(--ink)">Postgres</text>
+  <text class="meta" x="316" y="259" text-anchor="middle">metadata</text>
 
-  <rect class="box" x="392" y="294" width="184" height="52"/>
-  <text class="t name" x="484" y="315" text-anchor="middle">Edge · Singapore</text>
-  <text class="sub"    x="484" y="331" text-anchor="middle">ap-southeast-1 · FIFO</text>
+  <!-- ============ edges: marker at true position, label box offset ============ -->
+  <circle cx="524" cy="165" r="30" fill="url(#glow)"/>
+  <line class="leader" x1="524" y1="165" x2="524" y2="158"/>
+  <rect class="edgebox" x="458" y="106" width="132" height="52" rx="8"/>
+  <text class="name" x="524" y="124" text-anchor="middle">Frankfurt</text>
+  <text class="meta" x="524" y="138" text-anchor="middle">eu-central-1 · LFU</text>
+  <text class="meta" x="524" y="151" text-anchor="middle" fill="var(--hit)">hit 284 ms</text>
+  <circle cx="524" cy="165" r="4.5" fill="var(--hit)"/>
 
-  <rect class="box" x="646" y="180" width="144" height="70"/>
-  <text class="t name" x="718" y="205" text-anchor="middle">Origin</text>
-  <text class="sub"    x="718" y="222" text-anchor="middle">us-east-1</text>
-  <text class="sub"    x="718" y="238" text-anchor="middle">source of truth</text>
+  <circle cx="702" cy="255" r="30" fill="url(#glow)"/>
+  <line class="leader" x1="702" y1="255" x2="736" y2="257"/>
+  <rect class="edgebox" x="736" y="232" width="132" height="52" rx="8"/>
+  <text class="name" x="802" y="250" text-anchor="middle">Mumbai</text>
+  <text class="meta" x="802" y="264" text-anchor="middle">ap-south-1 · LRU</text>
+  <text class="meta" x="802" y="277" text-anchor="middle" fill="var(--hit)">hit 741 ms</text>
+  <circle cx="702" cy="255" r="4.5" fill="var(--hit)"/>
 
-  <rect class="panel" x="832" y="148" width="116" height="48"/>
-  <text class="t name" x="890" y="169" text-anchor="middle" style="font-size:13px">S3</text>
-  <text class="sub"    x="890" y="185" text-anchor="middle">file bytes</text>
+  <circle cx="788" cy="306" r="30" fill="url(#glow)"/>
+  <line class="leader" x1="788" y1="306" x2="770" y2="330"/>
+  <rect class="edgebox" x="640" y="330" width="140" height="52" rx="8"/>
+  <text class="name" x="710" y="348" text-anchor="middle">Singapore</text>
+  <text class="meta" x="710" y="362" text-anchor="middle">ap-southeast-1 · FIFO</text>
+  <text class="meta" x="710" y="375" text-anchor="middle" fill="var(--hit)">hit 836 ms</text>
+  <circle cx="788" cy="306" r="4.5" fill="var(--hit)"/>
 
-  <rect class="panel" x="832" y="238" width="116" height="48"/>
-  <text class="t name" x="890" y="259" text-anchor="middle" style="font-size:13px">PostgreSQL</text>
-  <text class="sub"    x="890" y="275" text-anchor="middle">metadata + logs</text>
+  <!-- ============ client cities ============ -->
+  <circle cx="370" cy="378" r="4" fill="var(--ink)"/>
+  <text class="city" x="362" y="395" text-anchor="end">São Paulo</text>
+  <circle cx="509" cy="291" r="4" fill="var(--ink)"/>
+  <text class="city" x="501" y="295" text-anchor="end">Lagos</text>
+  <circle cx="653" cy="237" r="4" fill="var(--ink)"/>
+  <text class="city" x="646" y="228" text-anchor="end">Dubai</text>
+  <circle cx="888" cy="207" r="4" fill="var(--ink)"/>
+  <text class="city" x="896" y="202">Tokyo</text>
+  <circle cx="920" cy="408" r="4" fill="var(--ink)"/>
+  <text class="city" x="928" y="412">Sydney</text>
 
-  <!-- ============ animated requests ============ -->
-  <!-- HIT: client -> LB -> edge -> back. Short route, quick loop. -->
-  <circle r="6" fill="var(--hit)">
-    <animateMotion dur="2.6s" repeatCount="indefinite"
-      keyPoints="0;1" keyTimes="0;1" calcMode="linear"
-      path="M 93,215 H 272 H 484 H 272 H 93"/>
-    <animate attributeName="opacity" dur="2.6s" repeatCount="indefinite"
-      values="0;1;1;1;1;0" keyTimes="0;0.06;0.4;0.6;0.94;1"/>
+  <!-- ============ animated traffic: out and back, staggered ============ -->
+  <circle r="5" fill="var(--hit)">
+    <animateMotion dur="3.2s" repeatCount="indefinite" keyPoints="0;1;0" keyTimes="0;0.5;1"
+      calcMode="linear" path="M 370,378 Q 430,235 519,174"/>
+  </circle>
+  <circle r="5" fill="var(--hit)">
+    <animateMotion dur="2.6s" begin="0.5s" repeatCount="indefinite" keyPoints="0;1;0" keyTimes="0;0.5;1"
+      calcMode="linear" path="M 509,291 Q 496,215 519,180"/>
+  </circle>
+  <circle r="5" fill="var(--hit)">
+    <animateMotion dur="2.1s" begin="1.1s" repeatCount="indefinite" keyPoints="0;1;0" keyTimes="0;0.5;1"
+      calcMode="linear" path="M 653,237 Q 676,232 696,248"/>
+  </circle>
+  <circle r="5" fill="var(--hit)">
+    <animateMotion dur="3.0s" begin="0.8s" repeatCount="indefinite" keyPoints="0;1;0" keyTimes="0;0.5;1"
+      calcMode="linear" path="M 888,207 Q 852,240 796,298"/>
+  </circle>
+  <circle r="5" fill="var(--hit)">
+    <animateMotion dur="3.5s" begin="1.7s" repeatCount="indefinite" keyPoints="0;1;0" keyTimes="0;0.5;1"
+      calcMode="linear" path="M 920,408 Q 878,350 795,314"/>
   </circle>
 
-  <!-- MISS: continues to origin and S3 before returning. Same start, longer
-       route, and a duration scaled to the measured 3.5x gap. -->
-  <circle r="6" fill="var(--miss)">
-    <animateMotion dur="6.4s" repeatCount="indefinite"
-      keyPoints="0;1" keyTimes="0;1" calcMode="linear"
-      path="M 93,215 H 272 H 484 H 718 H 890 H 718 H 484 H 272 H 93"/>
-    <animate attributeName="opacity" dur="6.4s" repeatCount="indefinite"
-      values="0;1;1;1;1;0" keyTimes="0;0.04;0.4;0.6;0.96;1"/>
+  <!-- the miss: one slow trip to Virginia and back, then the store pulse -->
+  <circle r="6" fill="var(--miss)" opacity="0">
+    <animateMotion dur="9s" repeatCount="indefinite" keyPoints="0;0;1;1;0;0" keyTimes="0;0.14;0.42;0.5;0.78;1"
+      calcMode="linear" path="M 690,250 Q 490,150 318,196"/>
+    <animate attributeName="opacity" dur="9s" repeatCount="indefinite"
+      values="0;1;1;1;1;0;0" keyTimes="0;0.15;0.42;0.5;0.77;0.8;1"/>
   </circle>
-
-  <!-- cache-store pulse on the Frankfurt edge, after a miss returns through it -->
-  <circle cx="484" cy="215" r="7" fill="none" stroke="var(--miss)" stroke-width="2" opacity="0">
-    <animate attributeName="r"       dur="6.4s" repeatCount="indefinite" values="7;7;22;22"  keyTimes="0;0.62;0.74;1"/>
-    <animate attributeName="opacity" dur="6.4s" repeatCount="indefinite" values="0;0;.9;0"   keyTimes="0;0.62;0.66;0.78"/>
+  <circle cx="702" cy="255" r="8" fill="none" stroke="var(--miss)" stroke-width="2.2" opacity="0">
+    <animate attributeName="r"       dur="9s" repeatCount="indefinite" values="8;8;30;30" keyTimes="0;0.79;0.9;1"/>
+    <animate attributeName="opacity" dur="9s" repeatCount="indefinite" values="0;0;.95;0" keyTimes="0;0.79;0.82;0.93"/>
   </circle>
+  <text class="meta" x="660" y="300" text-anchor="end" fill="var(--miss)" opacity="0">
+    stored — every later request is a hit
+    <animate attributeName="opacity" dur="9s" repeatCount="indefinite"
+      values="0;0;1;1;0" keyTimes="0;0.80;0.84;0.93;0.97"/>
+  </text>
 
   <!-- ============ legend ============ -->
-  <circle cx="46" cy="386" r="6" fill="var(--hit)"/>
-  <text class="t key" x="60" y="390" fill="var(--hit)">cache hit</text>
-  <text class="lbl"   x="132" y="390">served from the edge's RAM — never reaches origin · p50 458 ms</text>
+  <line x1="28" y1="472" x2="972" y2="472" stroke="var(--faint)" stroke-width="1"/>
 
-  <circle cx="46" cy="410" r="6" fill="var(--miss)"/>
-  <text class="t key" x="60" y="414" fill="var(--miss)">cache miss</text>
-  <text class="lbl"   x="140" y="414">edge fetches from origin, stores it, then serves · p50 1620 ms — happens once per key</text>
+  <circle cx="36" cy="500" r="5.5" fill="var(--hit)"/>
+  <text class="key" x="50" y="504" fill="var(--hit)">cache hit</text>
+  <text class="meta" x="120" y="504">served from the edge's own memory, origin never contacted · p50 458 ms · 94% of requests</text>
 
-  <text class="lbl" x="611" y="236" text-anchor="middle">on a miss</text>
+  <circle cx="36" cy="526" r="5.5" fill="var(--miss)"/>
+  <text class="key" x="50" y="530" fill="var(--miss)">cache miss</text>
+  <text class="meta" x="128" y="530">edge fetches from origin once, stores it, then serves · p50 1620 ms · 3.5× slower</text>
+
+  <circle cx="36" cy="552" r="5.5" fill="var(--origin)"/>
+  <text class="key" x="50" y="556" fill="var(--origin)">origin</text>
+  <text class="meta" x="102" y="556">source of truth — S3 holds the bytes, Postgres holds the checksum and version</text>
+
+  <text class="meta" x="972" y="556" text-anchor="end" opacity=".85">25 concurrent misses collapse to 1 origin fetch</text>
 </svg>
